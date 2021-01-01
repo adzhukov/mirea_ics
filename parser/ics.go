@@ -1,66 +1,127 @@
 package parser
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
 
-func writeHeader(sb *strings.Builder, name string) {
-	sb.WriteString("BEGIN:VCALENDAR\n")
-	sb.WriteString("METHOD:PUBLISH\n")
-	sb.WriteString("VERSION:2.0\n")
-	sb.WriteString("X-WR-CALNAME:")
-	sb.WriteString(name)
-	sb.WriteString("\n")
-	sb.WriteString("PRODID:-//Apple Inc.//Mac OS X 10.15.5//EN\n")
-	sb.WriteString("X-APPLE-CALENDAR-COLOR:#FFCC00\n")
-	sb.WriteString("X-WR-TIMEZONE:Europe/Moscow\n")
-	sb.WriteString("CALSCALE:GREGORIAN\n")
+const defaultLocation = "Moscow Technological University"
+
+const delimiter = "\r\n"
+const timeFormat = "20060102T150405"
+
+func (event class) String() string {
+	var sb strings.Builder
+	writeEvent(&sb, event)
+	return sb.String()
 }
 
-func writeFooter(sb *strings.Builder) {
-	sb.WriteString("END:VCALENDAR")
-}
-
-func writeVTimezone(sb *strings.Builder) {
-	sb.WriteString("BEGIN:VTIMEZONE\n")
-	sb.WriteString("TZID:Europe/Moscow\n")
-	sb.WriteString("BEGIN:STANDARD\n")
-	sb.WriteString("TZOFFSETFROM:+023017\n")
-	sb.WriteString("DTSTART:20010101T000000\n")
-	sb.WriteString("TZNAME:GMT+3\n")
-	sb.WriteString("TZOFFSETTO:+023017\n")
-	sb.WriteString("END:STANDARD\n")
-	sb.WriteString("END:VTIMEZONE\n")
-}
-
-func writeAppleLocation(sb *strings.Builder, title *string) {
-	sb.WriteString("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=Vernadskogo prospekt 78\n")
-	sb.WriteString(" \\nMoscow\\nMoscow\\nRussia\\n119415;X-APPLE-MAPKIT-HANDLE=CAESxwEaEgkgE7\n")
-	sb.WriteString(" ngwtVLQBGy+0hSe71CQCJfCgZSdXNzaWESAlJVGgZNb3Njb3cqBk1vc2NvdzIGTW9zY293Og\n")
-	sb.WriteString(" YxMTk0MTVSFFZlcm5hZHNrb2dvIHByb3NwZWt0WgI3OGIXVmVybmFkc2tvZ28gcHJvc3Bla3\n")
-	sb.WriteString(" QgNzgqH01vc2NvdyBUZWNobm9sb2dpY2FsIFVuaXZlcnNpdHkyF1Zlcm5hZHNrb2dvIHByb3\n")
-	sb.WriteString(" NwZWt0IDc4MgZNb3Njb3cyBlJ1c3NpYTIGMTE5NDE1;X-APPLE-REFERENCEFRAME=0;X-TI\n")
-	sb.WriteString(" TLE=")
-	if title != nil {
-		sb.WriteString(*title)
-	} else {
-		sb.WriteString("Moscow Technological University")
+func (table timeTable) String() string {
+	var sb strings.Builder
+	writeHeader(&sb, table.group)
+	writeVTimezone(&sb)
+	for _, event := range table.classes {
+		sb.WriteString(event.String())
 	}
-	sb.WriteString("::geo:55.670010,37.480326\n")
+	writeFooter(&sb)
+	return sb.String()
 }
 
-func writeLocation(sb *strings.Builder, title *string) {
-	sb.WriteString("LOCATION:")
-	if title != nil {
-		sb.WriteString(*title)
-	} else {
-		sb.WriteString("RTU MIREA")
+func writeToICS(table timeTable) {
+	ioutil.WriteFile(table.group+".ics", []byte(table.String()), 0644)
+}
+
+func write(w io.Writer, a ...interface{}) {
+	fmt.Fprint(w, append(a, delimiter)...)
+}
+
+func writeLong(w io.Writer, a ...interface{}) {
+	b := bytes.NewBufferString("")
+	fmt.Fprint(b, a...)
+	r := b.String()
+	if len(r) > 75 {
+		l := limitLineLength(r, 75)
+		fmt.Fprint(w, l, delimiter)
+		r = r[len(l):]
+		fmt.Fprint(w, " ")
 	}
-	sb.WriteString("\\nVernadskogo prospekt 78\\nMoscow\\nMoscow\\nRussia\\n119415\n")
+	for len(r) > 74 {
+		l := limitLineLength(r, 74)
+		fmt.Fprint(w, l, delimiter)
+		r = r[len(l):]
+		fmt.Fprint(w, " ")
+	}
+	fmt.Fprint(w, r, delimiter)
+}
+
+func limitLineLength(s string, max int) string {
+	length := 0
+	for _, r := range s {
+		newLength := length + utf8.RuneLen(r)
+		if newLength > max {
+			break
+		}
+		length = newLength
+	}
+	return s[:length]
+}
+
+func writeHeader(w io.Writer, name string) {
+	write(w, "BEGIN:VCALENDAR")
+	write(w, "METHOD:PUBLISH")
+	write(w, "VERSION:2.0")
+	writeLong(w, "X-WR-CALNAME:", name)
+	write(w, "PRODID:-//Apple Inc.//Mac OS X 10.15.5//EN")
+	write(w, "X-APPLE-CALENDAR-COLOR:#FFCC00")
+	write(w, "X-WR-TIMEZONE:Europe/Moscow")
+	write(w, "CALSCALE:GREGORIAN")
+}
+
+func writeFooter(w io.Writer) {
+	fmt.Fprintln(w, "END:VCALENDAR")
+}
+
+func writeVTimezone(w io.Writer) {
+	write(w, "BEGIN:VTIMEZONE")
+	write(w, "TZID:Europe/Moscow")
+	write(w, "BEGIN:STANDARD")
+	write(w, "TZOFFSETFROM:+023017")
+	write(w, "DTSTART:20010101T000000")
+	write(w, "TZNAME:GMT+3")
+	write(w, "TZOFFSETTO:+023017")
+	write(w, "END:STANDARD")
+	write(w, "END:VTIMEZONE")
+}
+
+func writeAppleLocation(w io.Writer, title *string) {
+	location := defaultLocation
+	if title != nil {
+		location = *title
+	}
+
+	writeLong(w, "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=Vernadskogo prospekt 78",
+		"\\nMoscow\\nMoscow\\nRussia\\n119415;X-APPLE-MAPKIT-HANDLE=CAESxwEaEgkgE7",
+		"ngwtVLQBGy+0hSe71CQCJfCgZSdXNzaWESAlJVGgZNb3Njb3cqBk1vc2NvdzIGTW9zY293Og",
+		"YxMTk0MTVSFFZlcm5hZHNrb2dvIHByb3NwZWt0WgI3OGIXVmVybmFkc2tvZ28gcHJvc3Bla3",
+		"QgNzgqH01vc2NvdyBUZWNobm9sb2dpY2FsIFVuaXZlcnNpdHkyF1Zlcm5hZHNrb2dvIHByb3",
+		"NwZWt0IDc4MgZNb3Njb3cyBlJ1c3NpYTIGMTE5NDE1;X-APPLE-REFERENCEFRAME=0;X-TI",
+		"TLE=", location, "::geo:55.670010,37.480326")
+}
+
+func writeLocation(w io.Writer, title *string) {
+	location := defaultLocation
+	if title != nil {
+		location = *title
+	}
+
+	write(w, "LOCATION:", location, "\\nVernadskogo prospekt 78\\nMoscow\\nMoscow\\nRussia\\n119415")
 }
 
 func (event *class) byday() string {
@@ -81,7 +142,7 @@ func (event *class) byday() string {
 	return "SU"
 }
 
-func writeRepeatRule(sb *strings.Builder, event *class) {
+func writeRepeatRule(w io.Writer, event *class) {
 	var endDate time.Time
 
 	switch event.repeat.mode {
@@ -93,91 +154,44 @@ func writeRepeatRule(sb *strings.Builder, event *class) {
 		endDate = semesterEndDate
 	}
 
-	sb.WriteString("RRULE:FREQ=WEEKLY;")
-	sb.WriteString("INTERVAL=2;")
-	sb.WriteString("UNTIL=")
-	sb.WriteString(endDate.UTC().Format("20060102T150405"))
-	sb.WriteString(";BYDAY=")
-	sb.WriteString(event.byday())
-	sb.WriteString(";WKST=SU;\n")
+	write(w, "RRULE:FREQ=WEEKLY;",
+		"INTERVAL=2;",
+		"UNTIL=", endDate.UTC().Format("20060102T150405"),
+		";BYDAY=", event.byday(), ";WKST=SU;")
 }
 
-func limitLineLength(s string, limit int) string {
-	if limit >= len(s) {
-		return s
-	}
-	var chunks []string
-	chunk := make([]rune, limit)
-	len := 0
-	for _, r := range s {
-		chunk[len] = r
-		len++
-		if len == limit {
-			chunks = append(chunks, string(chunk))
-			chunk[0] = ' '
-			len = 1
-		}
-	}
-	if len > 0 {
-		chunks = append(chunks, string(chunk[:len]))
-	}
-	return strings.Join(chunks, "\n")
+func writeSummary(w io.Writer, event *class) {
+	classType := strings.TrimSpace(event.classType)
+	classType = strings.ToUpper(classType)
+	subject := strings.TrimSpace(event.subject)
+	writeLong(w, "SUMMARY:", classType, " ", subject)
 }
 
-func writeSummary(sb *strings.Builder, event *class) {
-	sb.WriteString("SUMMARY:")
-	sb.WriteString(limitLineLength(event.classType+" "+event.subject, 74))
-	sb.WriteString("\n")
-}
-
-func writeEvent(sb *strings.Builder, event class) {
+func writeEvent(w io.Writer, event class) {
 	timeNow := time.Now().UTC().Format(time.RFC3339)
 
-	sb.WriteString("BEGIN:VEVENT\n")
-	sb.WriteString("TRANSP:OPAQUE\n")
+	write(w, "BEGIN:VEVENT")
+	write(w, "TRANSP:OPAQUE")
 
-	sb.WriteString("DTSTART;TZID=Europe/Moscow:")
-	sb.WriteString(event.startTime.Format("20060102T150405"))
-	sb.WriteString("\n")
-	sb.WriteString("DTEND;TZID=Europe/Moscow:")
-	sb.WriteString(event.endTime().Format("20060102T150405"))
-	sb.WriteString("\n")
+	write(w, "DTSTART;TZID=Europe/Moscow:", event.startTime.Format(timeFormat))
+	write(w, "DTEND;TZID=Europe/Moscow:", event.endTime().Format(timeFormat))
 
-	sb.WriteString("UID:")
-	sb.WriteString(uuid.New().String())
-	sb.WriteString("\n")
+	write(w, "UID:", uuid.New().String())
 
-	writeRepeatRule(sb, &event)
-	writeAppleLocation(sb, &event.classroom)
-	writeLocation(sb, &event.classroom)
-	sb.WriteString("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:DISABLED\n")
-	sb.WriteString("SEQUENCE:0\n")
+	writeRepeatRule(w, &event)
+	writeAppleLocation(w, &event.classroom)
+	writeLocation(w, &event.classroom)
 
-	writeSummary(sb, &event)
-	sb.WriteString("DESCRIPTION:")
-	sb.WriteString(event.lecturer)
-	sb.WriteString("\n")
+	write(w, "X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:DISABLED")
+	write(w, "SEQUENCE:0")
 
-	sb.WriteString("DTSTAMP:")
-	sb.WriteString(timeNow)
-	sb.WriteString("\n")
-	sb.WriteString("CREATED:")
-	sb.WriteString(timeNow)
-	sb.WriteString("\n")
-	sb.WriteString("LAST-MODIFIED:")
-	sb.WriteString(timeNow)
-	sb.WriteString("\n")
+	writeSummary(w, &event)
 
-	sb.WriteString("END:VEVENT\n")
-}
+	writeLong(w, "DESCRIPTION:", event.lecturer)
 
-func writeToICS(table timeTable) {
-	var sb strings.Builder
-	writeHeader(&sb, table.group)
-	writeVTimezone(&sb)
-	for _, event := range table.classes {
-		writeEvent(&sb, event)
-	}
-	writeFooter(&sb)
-	ioutil.WriteFile(table.group+".ics", []byte(sb.String()), 0644)
+	write(w, "DTSTAMP:", timeNow)
+	write(w, "CREATED:", timeNow)
+	write(w, "LAST-MODIFIED:", timeNow)
+
+	write(w, "END:VEVENT")
 }
