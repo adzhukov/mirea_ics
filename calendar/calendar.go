@@ -15,6 +15,7 @@ type Calendar struct {
 }
 
 type Semester struct {
+	Year  int
 	Type  bool
 	Start time.Time
 	End   time.Time

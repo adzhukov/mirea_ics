@@ -33,12 +33,35 @@ func getGroupColumn(sheet *xlsx.Sheet, cal calendar.Calendar) int {
 	return column
 }
 
+func parseSemesterInfo(title string, s *calendar.Semester) {
+	s.Type = strings.Contains(title, "осеннего")
+	s.Year = time.Now().Year()
+
+	splitted := strings.Split(title, "-")
+	if len(splitted) != 2 {
+		log.Println("Unable to parse year")
+		return
+	}
+
+	yearStr := strings.Fields(splitted[1])[0]
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		log.Println("Unable to parse year")
+		return
+	}
+
+	s.Year = year
+	if s.Type {
+		s.Year--
+	}
+}
+
 func parse(sheet *xlsx.Sheet, group string) calendar.Calendar {
 	var cal calendar.Calendar
 
 	cell, _ := sheet.Cell(0, 0)
-	cal.Semester.Type = strings.Contains(cell.String(), "осеннего")
-	cal.Semester.Start = semesterStart(cal.Semester.Type)
+	parseSemesterInfo(cell.String(), &cal.Semester)
+	cal.Semester.Start = semesterStart(cal.Semester.Year, cal.Semester.Type)
 	cal.Semester.End = semesterEnd(cal.Semester.Start)
 	cal.Group = group
 
