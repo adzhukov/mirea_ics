@@ -14,9 +14,16 @@ type Calendar struct {
 	Classes  []Event
 }
 
+const (
+	Autumn = iota
+	Spring = iota
+	Winter = iota
+	Summer = iota
+)
+
 type Semester struct {
 	Year  int
-	Type  bool
+	Type  int
 	Start time.Time
 	End   time.Time
 }
