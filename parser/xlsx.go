@@ -7,26 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adzhukov/mirea_ics/calendar"
+	"github.com/adzhukov/mirea_ics/repeat"
+
 	"github.com/tealeg/xlsx/v3"
 )
-
-type timeTable struct {
-	classes      []class
-	group        string
-	semesterType bool
-}
-
-type class struct {
-	subject   string
-	classType string
-	classroom string
-	startTime time.Time
-	lecturer  string
-	parity    bool
-	num       int
-	repeat    repeatRule
-	weekday   time.Weekday
-}
 
 const (
 	offsetSubject   = iota
@@ -35,20 +20,11 @@ const (
 	offsetClassroom = iota
 )
 
-var table timeTable
-
-func setSemesterType(sheet *xlsx.Sheet) {
-	cell, _ := sheet.Cell(0, 0)
-	table.semesterType = strings.Contains(cell.String(), "осеннего")
-	semesterStartDate = semesterStart(table.semesterType)
-	semesterEndDate = semesterEnd()
-}
-
-func getGroupColumn(sheet *xlsx.Sheet) int {
+func getGroupColumn(sheet *xlsx.Sheet, cal calendar.Calendar) int {
 	row, _ := sheet.Row(1)
 	column := 0
 	row.ForEachCell(func(cell *xlsx.Cell) error {
-		if table.group == cell.String() {
+		if cal.Group == cell.String() {
 			column, _ = cell.GetCoordinates()
 			return errors.New("Success")
 		}
@@ -57,11 +33,20 @@ func getGroupColumn(sheet *xlsx.Sheet) int {
 	return column
 }
 
-func parse(sheet *xlsx.Sheet) {
-	setSemesterType(sheet)
-	groupColumn, rowNumber := getGroupColumn(sheet), 3
-	var currentClass class
-	currentClass.weekday = time.Sunday
+func parse(sheet *xlsx.Sheet, group string) calendar.Calendar {
+	var cal calendar.Calendar
+
+	cell, _ := sheet.Cell(0, 0)
+	cal.Semester.Type = strings.Contains(cell.String(), "осеннего")
+	cal.Semester.Start = semesterStart(cal.Semester.Type)
+	cal.Semester.End = semesterEnd(cal.Semester.Start)
+	cal.Group = group
+
+	groupColumn, rowNumber := getGroupColumn(sheet, cal), 3
+	var current calendar.Event
+	current.Semester = &cal.Semester
+	current.Weekday = time.Sunday
+
 	for {
 		row, _ := sheet.Row(rowNumber)
 		weekType := row.GetCell(4).Value
@@ -73,38 +58,46 @@ func parse(sheet *xlsx.Sheet) {
 		isOddWeek := weekType == "I"
 
 		if isOddWeek {
-			currentClass.num, _ = strconv.Atoi(row.GetCell(1).Value)
-			if currentClass.num == 1 {
-				currentClass.weekday++
+			current.Num, _ = strconv.Atoi(row.GetCell(1).Value)
+			if current.Num == 1 {
+				current.Weekday++
 			}
-			currentClass.setEventTime(row.GetCell(2).Value)
+			setEventTime(&current, row.GetCell(2).Value)
 		}
 
-		currentClass.subject = row.GetCell(groupColumn + offsetSubject).Value
+		current.Subject = row.GetCell(groupColumn + offsetSubject).Value
 
-		if currentClass.subject != "" {
-			currentClass.classType = row.GetCell(groupColumn + offsetType).Value
-			currentClass.lecturer = row.GetCell(groupColumn + offsetLecturer).Value
-			currentClass.classroom = row.GetCell(groupColumn + offsetClassroom).Value
-			currentClass.parity = isOddWeek
-			currentClass.parseDates()
+		if current.Subject != "" {
+			current.ClassType = row.GetCell(groupColumn + offsetType).Value
+			current.Lecturer = row.GetCell(groupColumn + offsetLecturer).Value
+			current.Classroom = row.GetCell(groupColumn + offsetClassroom).Value
+			current.Parity = isOddWeek
 
-			table.classes = append(table.classes, currentClass)
+			parsed := repeat.Parse(current.Subject)
+			current.Repeat = parsed.Rule
+			if parsed.Subject != "" {
+				current.Subject = parsed.Subject
+			}
+
+			if parsed.StartWeek != 0 {
+				startAtWeek(&current, parsed.StartWeek)
+			}
+
+			cal.Classes = append(cal.Classes, current)
 		}
 
 		rowNumber++
 	}
+
+	return cal
 }
 
-func ParseFile(file string, group string) {
+func ParseFile(file string, g string) {
 	wb, err := xlsx.OpenFile(file, xlsx.RowLimit(125))
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	table.group = group
-
-	parse(wb.Sheets[0])
-	writeToICS(table)
+	calendar := parse(wb.Sheets[0], g)
+	calendar.WriteToFile()
 }

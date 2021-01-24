@@ -4,45 +4,40 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adzhukov/mirea_ics/calendar"
 )
 
-var semesterStartDate time.Time
-var semesterEndDate time.Time
+const semLength = 17
 
 func semesterStart(autumn bool) time.Time {
-	month := time.February
-	day := 13
+	month, day := time.February, 13
 	if autumn {
-		month = time.September
-		day = 1
+		month, day = time.September, 1
 	}
 
 	return time.Date(time.Now().Year(), month, day, 0, 0, 0, 0, time.UTC)
 }
 
-func semesterEnd() time.Time {
-	return semesterStartDate.AddDate(0, 0, 17*7)
+func semesterEnd(start time.Time) time.Time {
+	return start.AddDate(0, 0, semLength*7)
 }
 
-func (event *class) setEventTime(cellValue string) {
+func setEventTime(event *calendar.Event, cellValue string) {
 	splitted := strings.Split(cellValue, "-")
 	hours, _ := strconv.Atoi(splitted[0])
 	minutes, _ := strconv.Atoi(splitted[1])
 
 	localTime := time.Minute*time.Duration(minutes) + time.Hour*time.Duration(hours)
 
-	daysToMonday := int(time.Monday - semesterStartDate.Weekday() + event.weekday - 1)
-	startDate := semesterStartDate.AddDate(0, 0, daysToMonday)
-	if !event.parity {
+	daysToMonday := int(time.Monday - event.Semester.Start.Weekday() + event.Weekday - 1)
+	startDate := event.Semester.Start.AddDate(0, 0, daysToMonday)
+	if !event.Parity {
 		startDate = startDate.AddDate(0, 0, 7)
 	}
-	event.startTime = startDate.Add(localTime)
+	event.StartTime = startDate.Add(localTime)
 }
 
-func (event *class) endTime() time.Time {
-	return event.startTime.Add(time.Minute * 90)
-}
-
-func (event *class) startAtWeek(n int) {
-	event.startTime = event.startTime.AddDate(0, 0, 7*(n-1))
+func startAtWeek(event *calendar.Event, n int) {
+	event.StartTime = event.StartTime.AddDate(0, 0, 7*(n-1))
 }
