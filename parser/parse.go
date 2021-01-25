@@ -67,8 +67,14 @@ func ParseFile(file string, g string) {
 	}
 
 	sheet := wb.Sheets[0]
-	cell, _ := sheet.Cell(0, 0)
-	parseSemesterInfo(cell.String(), &cal.Semester)
+	row, _ := sheet.Row(0)
+
+	title := ""
+	for i := 0; title == ""; i++ {
+		title = row.GetCell(i).String()
+	}
+
+	parseSemesterInfo(title, &cal.Semester)
 
 	switch cal.Semester.Type {
 	case calendar.Autumn, calendar.Spring:

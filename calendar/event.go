@@ -57,10 +57,10 @@ func (event *Event) byday() string {
 	return "SU"
 }
 
-func writeAppleLocation(w io.Writer, title *string) {
+func writeAppleLocation(w io.Writer, title string) {
 	location := defaultLocation
-	if title != nil {
-		location = *title
+	if title != "" {
+		location = title
 	}
 
 	writeLong(w, "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=Vernadskogo prospekt 78",
@@ -72,10 +72,10 @@ func writeAppleLocation(w io.Writer, title *string) {
 		"TLE=", location, "::geo:55.670010,37.480326")
 }
 
-func writeLocation(w io.Writer, title *string) {
+func writeLocation(w io.Writer, title string) {
 	location := defaultLocation
-	if title != nil {
-		location = *title
+	if title != "" {
+		location = title
 	}
 
 	write(w, "LOCATION:", location, "\\nVernadskogo prospekt 78\\nMoscow\\nMoscow\\nRussia\\n119415")
@@ -118,6 +118,7 @@ func writeRepeatRule(w io.Writer, event *Event) {
 
 func writeSummary(w io.Writer, event *Event) {
 	classType := strings.TrimSpace(event.ClassType)
+	classType = strings.ReplaceAll(classType, "\n", "")
 	classType = strings.ToUpper(classType)
 	subject := strings.TrimSpace(event.Subject)
 	writeLong(w, "SUMMARY:", classType, " ", subject)
@@ -128,7 +129,7 @@ func (event *Event) endTime() time.Time {
 }
 
 func writeEvent(w io.Writer, event Event) {
-	timeNow := time.Now().UTC().Format(time.RFC3339)
+	timeNow := time.Now().UTC().Format(timeFormat)
 
 	write(w, "BEGIN:VEVENT")
 	write(w, "TRANSP:OPAQUE")
@@ -139,8 +140,8 @@ func writeEvent(w io.Writer, event Event) {
 	write(w, "UID:", uuid.New().String())
 
 	writeRepeatRule(w, &event)
-	writeAppleLocation(w, &event.Classroom)
-	writeLocation(w, &event.Classroom)
+	writeAppleLocation(w, event.Classroom)
+	writeLocation(w, event.Classroom)
 
 	write(w, "X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:DISABLED")
 	write(w, "SEQUENCE:0")
