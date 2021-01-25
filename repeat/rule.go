@@ -21,6 +21,7 @@ const (
 	Any   = iota
 	Once  = iota
 	Range = iota
+	Enum  = iota
 )
 
 func Parse(subject string) ParsedSubject {
@@ -28,26 +29,41 @@ func Parse(subject string) ParsedSubject {
 
 	splitted := strings.SplitN(subject, "н.", 2)
 
-	if len(splitted) < 2 {
+	if len(splitted) != 2 {
+		result.Rule.Mode = Any
+		result.Subject = strings.TrimSpace(subject)
 		return result
 	}
 
-	result.Subject = splitted[1]
-	datesStr := strings.Split(splitted[0], "-")
-	switch len(datesStr) {
-	case 1:
-		result.parseAsSingle(datesStr)
-	case 2:
-		result.parseAsRange(datesStr)
-	default:
-		log.Println("Unable to parse", datesStr)
+	dates := splitted[0]
+	result.Subject = strings.TrimSpace(splitted[1])
+
+	if strings.Count(dates, "-") == 1 {
+		result.parseAsRange(dates)
+	} else if strings.Count(dates, ",") > 0 {
+		result.parseAsEnum(dates)
+	} else {
+		result.parseAsSingle(dates)
 	}
 
 	return result
 }
 
-func (result *ParsedSubject) parseAsSingle(dates []string) {
-	week, err := strconv.Atoi(strings.TrimSpace(dates[0]))
+func (result *ParsedSubject) parseAsSingle(dates string) {
+	trimmed := strings.TrimSpace(dates)
+
+	if strings.HasPrefix(trimmed, "с ") {
+		weekString := strings.TrimPrefix(trimmed, "с ")
+		week, err := strconv.Atoi(strings.TrimSpace(weekString))
+		if err != nil {
+			log.Panic(err)
+		}
+		result.Rule.Mode = Any
+		result.StartWeek = week
+		return
+	}
+
+	week, err := strconv.Atoi(trimmed)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -56,13 +72,14 @@ func (result *ParsedSubject) parseAsSingle(dates []string) {
 	result.StartWeek = week
 }
 
-func (result *ParsedSubject) parseAsRange(dates []string) {
-	start, err := strconv.Atoi(strings.TrimSpace(dates[0]))
+func (result *ParsedSubject) parseAsRange(dates string) {
+	d := strings.Split(dates, "-")
+	start, err := strconv.Atoi(strings.TrimSpace(d[0]))
 	if err != nil {
-		log.Panic(err)
+
 	}
 
-	end, err := strconv.Atoi(strings.TrimSpace(dates[1]))
+	end, err := strconv.Atoi(strings.TrimSpace(d[1]))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -70,4 +87,18 @@ func (result *ParsedSubject) parseAsRange(dates []string) {
 	result.Rule.Mode = Range
 	result.Rule.Dates = []int{start, end}
 	result.StartWeek = start
+}
+
+func (result *ParsedSubject) parseAsEnum(dates string) {
+	d := strings.Split(dates, ",")
+	for _, week := range d {
+		week = strings.TrimSpace(week)
+		num, err := strconv.Atoi(week)
+		if err != nil {
+			log.Panic(err)
+		}
+		result.Rule.Dates = append(result.Rule.Dates, num)
+	}
+
+	result.Rule.Mode = Enum
 }

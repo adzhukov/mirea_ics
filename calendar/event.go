@@ -2,6 +2,7 @@ package calendar
 
 import (
 	"io"
+	"log"
 	"strings"
 	"time"
 
@@ -80,8 +81,19 @@ func writeLocation(w io.Writer, title *string) {
 	write(w, "LOCATION:", location, "\\nVernadskogo prospekt 78\\nMoscow\\nMoscow\\nRussia\\n119415")
 }
 
+func enumsIsRange(event *Event) int {
+	interval := event.Repeat.Dates[1] - event.Repeat.Dates[0]
+	for i := 2; i < len(event.Repeat.Dates); i++ {
+		if event.Repeat.Dates[i]-event.Repeat.Dates[i-1] != interval {
+			return 0
+		}
+	}
+	return interval
+}
+
 func writeRepeatRule(w io.Writer, event *Event) {
 	var endDate time.Time
+	var interval int = 2
 
 	switch event.Repeat.Mode {
 	case repeat.Once:
@@ -90,11 +102,17 @@ func writeRepeatRule(w io.Writer, event *Event) {
 		endDate = event.Semester.Start.AddDate(0, 0, 7*event.Repeat.Dates[1])
 	case repeat.Any:
 		endDate = event.Semester.End
+	case repeat.Enum:
+		if i := enumsIsRange(event); i != 0 {
+			interval = i
+		} else {
+			log.Panic("Invalid dates")
+		}
 	}
 
 	write(w, "RRULE:FREQ=WEEKLY;",
-		"INTERVAL=2;",
-		"UNTIL=", endDate.UTC().Format("20060102T150405"),
+		"INTERVAL=", interval,
+		";UNTIL=", endDate.UTC().Format("20060102T150405"),
 		";BYDAY=", event.byday(), ";WKST=SU;")
 }
 
