@@ -12,13 +12,20 @@ import (
 const defaultLocation = "Moscow Technological University"
 const timeFormat = "20060102T150405"
 
+type WeekType bool
+
+const (
+	Even WeekType = false
+	Odd  WeekType = true
+)
+
 type Event struct {
 	Subject   string
 	ClassType string
 	Classroom string
 	StartTime time.Time
 	Lecturer  string
-	Parity    bool
+	WeekType  WeekType
 	Num       int
 	Repeat    repeat.Rule
 	Weekday   time.Weekday

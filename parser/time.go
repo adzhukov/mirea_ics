@@ -50,21 +50,22 @@ func setExamTime(event *calendar.Event, dateCell string, timeCell string) {
 	event.StartTime = startDate.Add(localTime)
 }
 
-func setEventTime(event *calendar.Event, cellValue string) {
-	splitted := strings.Split(cellValue, "-")
+func setEventTime(event *calendar.Event, timeCell string, start int) {
+	daysToEvent := int(time.Monday - event.Semester.Start.Weekday() + event.Weekday - 1)
+	startDate := event.Semester.Start.AddDate(0, 0, daysToEvent)
+
+	if start != 0 {
+		startDate = startDate.AddDate(0, 0, 7*(start-1))
+	} else if event.WeekType == calendar.Even {
+		startDate = startDate.AddDate(0, 0, 7)
+	} else if startDate.Month() < event.Semester.Start.Month() {
+		startDate = startDate.AddDate(0, 0, 14)
+	}
+
+	splitted := strings.Split(timeCell, "-")
 	hours, _ := strconv.Atoi(splitted[0])
 	minutes, _ := strconv.Atoi(splitted[1])
 
 	localTime := time.Minute*time.Duration(minutes) + time.Hour*time.Duration(hours)
-
-	daysToMonday := int(time.Monday - event.Semester.Start.Weekday() + event.Weekday - 1)
-	startDate := event.Semester.Start.AddDate(0, 0, daysToMonday)
-	if !event.Parity {
-		startDate = startDate.AddDate(0, 0, 7)
-	}
 	event.StartTime = startDate.Add(localTime)
-}
-
-func startAtWeek(event *calendar.Event, n int) {
-	event.StartTime = event.StartTime.AddDate(0, 0, 7*(n-1))
 }
