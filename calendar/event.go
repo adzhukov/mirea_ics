@@ -2,7 +2,6 @@ package calendar
 
 import (
 	"io"
-	"log"
 	"strings"
 	"time"
 
@@ -91,6 +90,16 @@ func enumsIsRange(event *Event) int {
 	return interval
 }
 
+func findMissingWeeks(event *Event) {
+	prev := event.Repeat.Dates[0] - 2
+	for _, week := range event.Repeat.Dates {
+		for prev+2 != week {
+			prev += 2
+			event.Repeat.Except = append(event.Repeat.Except, week)
+		}
+	}
+}
+
 func writeRepeatRule(w io.Writer, event *Event) {
 	var endDate time.Time
 	var interval int = 2
@@ -105,8 +114,10 @@ func writeRepeatRule(w io.Writer, event *Event) {
 	case repeat.Enum:
 		if i := enumsIsRange(event); i != 0 {
 			interval = i
+			last := event.Repeat.Dates[len(event.Repeat.Dates)-1]
+			endDate = event.Semester.Start.AddDate(0, 0, 7*last)
 		} else {
-			log.Panic("Invalid dates")
+			findMissingWeeks(event)
 		}
 	}
 
@@ -114,6 +125,18 @@ func writeRepeatRule(w io.Writer, event *Event) {
 		"INTERVAL=", interval,
 		";UNTIL=", endDate.UTC().Format("20060102T150405"),
 		";BYDAY=", event.byday(), ";WKST=SU;")
+
+	if len(event.Repeat.Except) != 0 {
+		writeExDate(w, event)
+	}
+}
+
+func writeExDate(w io.Writer, event *Event) {
+	dates := []string{}
+	for _, date := range event.Repeat.Except {
+		dates = append(dates, event.StartTime.AddDate(0, 0, 7*(date-1)).Format(timeFormat))
+	}
+	writeLong(w, "EXDATE;TZID=Europe/Moscow:", strings.Join(dates, ","))
 }
 
 func writeSummary(w io.Writer, event *Event) {

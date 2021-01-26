@@ -13,8 +13,9 @@ type ParsedSubject struct {
 }
 
 type Rule struct {
-	Mode  int
-	Dates []int
+	Mode   int
+	Dates  []int
+	Except []int
 }
 
 const (
@@ -63,6 +64,17 @@ func (result *ParsedSubject) parseAsSingle(dates string) {
 		return
 	}
 
+	if strings.HasPrefix(trimmed, "кр. ") {
+		weekString := strings.TrimPrefix(trimmed, "кр. ")
+		week, err := strconv.Atoi(strings.TrimSpace(weekString))
+		if err != nil {
+			log.Panic(err)
+		}
+		result.Rule.Mode = Any
+		result.Rule.Except = []int{week}
+		return
+	}
+
 	week, err := strconv.Atoi(trimmed)
 	if err != nil {
 		log.Panic(err)
@@ -76,7 +88,7 @@ func (result *ParsedSubject) parseAsRange(dates string) {
 	d := strings.Split(dates, "-")
 	start, err := strconv.Atoi(strings.TrimSpace(d[0]))
 	if err != nil {
-
+		log.Panic(err)
 	}
 
 	end, err := strconv.Atoi(strings.TrimSpace(d[1]))
@@ -90,6 +102,21 @@ func (result *ParsedSubject) parseAsRange(dates string) {
 }
 
 func (result *ParsedSubject) parseAsEnum(dates string) {
+	trimmed := strings.TrimSpace(dates)
+	if strings.HasPrefix(trimmed, "кр ") {
+		weekString := strings.TrimPrefix(trimmed, "кр ")
+		result.Rule.Mode = Any
+		weeks := strings.Split(weekString, ",")
+		for _, week := range weeks {
+			w, err := strconv.Atoi(strings.TrimSpace(week))
+			if err != nil {
+				log.Panic(err)
+			}
+			result.Rule.Except = append(result.Rule.Except, w)
+		}
+		return
+	}
+
 	d := strings.Split(dates, ",")
 	for _, week := range d {
 		week = strings.TrimSpace(week)
@@ -100,5 +127,6 @@ func (result *ParsedSubject) parseAsEnum(dates string) {
 		result.Rule.Dates = append(result.Rule.Dates, num)
 	}
 
+	result.StartWeek = result.Rule.Dates[0]
 	result.Rule.Mode = Enum
 }
