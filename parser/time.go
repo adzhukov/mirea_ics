@@ -9,8 +9,6 @@ import (
 	"github.com/adzhukov/mirea_ics/calendar"
 )
 
-const semLength = 17
-
 func semesterStart(year int, semester int) time.Time {
 	var month time.Month
 	var day int
@@ -29,8 +27,8 @@ func semesterStart(year int, semester int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
 
-func semesterEnd(start time.Time) time.Time {
-	return start.AddDate(0, 0, semLength*7)
+func semesterEnd(length int, start time.Time) time.Time {
+	return start.AddDate(0, 0, length*7)
 }
 
 func setExamTime(event *calendar.Event, dateCell string, timeCell string) {
