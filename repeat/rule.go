@@ -13,16 +13,19 @@ type ParsedSubject struct {
 }
 
 type Rule struct {
-	Mode   int
+	Mode   RepeatMode
 	Dates  []int
 	Except []int
 }
 
+type RepeatMode int
+
 const (
-	Any   = iota
-	Once  = iota
-	Range = iota
-	Enum  = iota
+	_     RepeatMode = iota
+	Any   RepeatMode = iota
+	Once  RepeatMode = iota
+	Range RepeatMode = iota
+	Enum  RepeatMode = iota
 )
 
 func Parse(subject string) ParsedSubject {

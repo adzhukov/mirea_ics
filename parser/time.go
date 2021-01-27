@@ -9,7 +9,7 @@ import (
 	"github.com/adzhukov/mirea_ics/calendar"
 )
 
-func semesterStart(year int, semester int) time.Time {
+func semesterStart(year int, semester calendar.SemesterType) time.Time {
 	var month time.Month
 	var day int
 

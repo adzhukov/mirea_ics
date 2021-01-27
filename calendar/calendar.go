@@ -3,7 +3,7 @@ package calendar
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 )
@@ -14,44 +14,66 @@ type Calendar struct {
 	Classes  []Event
 }
 
+type SemesterType int
+
 const (
-	Autumn = iota
-	Spring = iota
-	Winter = iota
-	Summer = iota
+	_      SemesterType = iota
+	Autumn SemesterType = iota
+	Winter SemesterType = iota
+	Spring SemesterType = iota
+	Summer SemesterType = iota
 )
 
 type Semester struct {
 	Year  int
-	Type  int
+	Num   int
+	Type  SemesterType
 	Start time.Time
 	End   time.Time
 }
 
 func (cal Calendar) String() string {
 	var sb strings.Builder
-	cal.writeHeader(&sb)
-	writeVTimezone(&sb)
-	for _, event := range cal.Classes {
-		sb.WriteString(event.String())
-	}
-	writeFooter(&sb)
+	cal.WriteTo(&sb)
 	return sb.String()
 }
 
-func (cal Calendar) WriteToFile() {
-	ioutil.WriteFile(cal.filename(), []byte(cal.String()), 0644)
+func (cal Calendar) File() {
+	file, err := os.Create(cal.name() + ".ics")
+	if err != nil {
+		panic(err)
+	}
+
+	cal.WriteTo(file)
+	file.Close()
 }
 
-func (cal Calendar) filename() string {
-	return cal.Group + ".ics"
+func (cal Calendar) WriteTo(w io.Writer) {
+	cal.writeHeader(w)
+	writeVTimezone(w)
+	for _, event := range cal.Classes {
+		event.WriteTo(w)
+	}
+	writeFooter(w)
+}
+
+func (cal Calendar) name() string {
+	n := cal.Semester.Num * 2
+	t := "Семестр"
+	if cal.Semester.Type == Autumn || cal.Semester.Type == Winter {
+		n--
+	}
+	if cal.Semester.Type == Winter || cal.Semester.Type == Summer {
+		t = "Сессия"
+	}
+	return fmt.Sprintf("%s %d %s", cal.Group, n, t)
 }
 
 func (cal Calendar) writeHeader(w io.Writer) {
 	write(w, "BEGIN:VCALENDAR")
 	write(w, "METHOD:PUBLISH")
 	write(w, "VERSION:2.0")
-	writeLong(w, "X-WR-CALNAME:", cal.Group)
+	writeLong(w, "X-WR-CALNAME:", cal.name())
 	write(w, "PRODID:-//Apple Inc.//Mac OS X 10.15.5//EN")
 	write(w, "X-APPLE-CALENDAR-COLOR:#FFCC00")
 	write(w, "X-WR-TIMEZONE:Europe/Moscow")
@@ -71,5 +93,5 @@ func writeVTimezone(w io.Writer) {
 }
 
 func writeFooter(w io.Writer) {
-	fmt.Fprintln(w, "END:VCALENDAR")
+	write(w, "END:VCALENDAR")
 }

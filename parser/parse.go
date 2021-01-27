@@ -26,11 +26,8 @@ func getGroupColumn(sheet *xlsx.Sheet, group string) int {
 }
 
 func semesterLength(group string) int {
-	switch []rune(group)[2] {
-	case 'Б':
+	if []rune(group)[2] == 'Б' {
 		return 16
-	case 'М':
-		return 17
 	}
 
 	return 17
@@ -64,6 +61,18 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 	}
 
 	s.Start = semesterStart(s.Year, s.Type)
+
+	splitted = strings.Fields(title)
+	for i := range splitted {
+		if splitted[i] == "курса" {
+			n, err := strconv.Atoi(splitted[i-1])
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			s.Num = n
+		}
+	}
 }
 
 func ParseFile(file string, g string) {
@@ -93,5 +102,6 @@ func ParseFile(file string, g string) {
 	case calendar.Winter, calendar.Summer:
 		parseExams(sheet, g, &cal)
 	}
-	cal.WriteToFile()
+
+	cal.File()
 }
