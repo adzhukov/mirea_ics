@@ -43,7 +43,7 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 	} else if strings.Contains(title, "летней") {
 		s.Type = calendar.Summer
 	} else {
-		log.Println("Unable to parse semester type")
+		panic("Unable to parse semester type")
 	}
 	s.Year = time.Now().Year()
 
@@ -51,11 +51,11 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 	splitted = strings.Fields(splitted[len(splitted)-1])
 	year, err := strconv.Atoi(splitted[0])
 	if err != nil {
-		log.Println("Unable to parse year")
-		return
+		log.Println("Unable to parse year", err)
+	} else {
+		s.Year = year
 	}
 
-	s.Year = year
 	if s.Type == calendar.Autumn {
 		s.Year--
 	}
@@ -68,9 +68,9 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 			n, err := strconv.Atoi(splitted[i-1])
 			if err != nil {
 				log.Println(err)
-				return
 			}
 			s.Num = n
+			break
 		}
 	}
 }

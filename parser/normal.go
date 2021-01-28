@@ -18,7 +18,10 @@ const (
 	offsetClassroom = iota
 )
 
-const timeColumn = 2
+const (
+	timeColumn = 2
+	weekColumn = 4
+)
 
 func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 	base, rowNumber := getGroupColumn(sheet, cal.Group), 3
@@ -33,7 +36,7 @@ func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 	for {
 		row, _ := sheet.Row(rowNumber)
 
-		weekType := row.GetCell(4).Value
+		weekType := row.GetCell(weekColumn).Value
 		if weekType == "" {
 			break
 		}
