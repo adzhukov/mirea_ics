@@ -2,7 +2,10 @@ package parser
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -82,8 +85,28 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 	}
 }
 
-func ParseFile(file string, g string) {
-	wb, err := xlsx.OpenFile(file, xlsx.RowLimit(125))
+func openFile(uri string) (*xlsx.File, error) {
+	if !strings.HasPrefix(uri, "http") {
+		return xlsx.OpenFile(uri, xlsx.RowLimit(125))
+	}
+
+	resp, err := http.Get(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return xlsx.OpenBinary(body, xlsx.RowLimit(125))
+}
+
+func Parse(uri string, g string) {
+	wb, err := openFile(uri)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -119,4 +142,45 @@ func ParseFile(file string, g string) {
 	}
 
 	cal.File()
+}
+
+func Groups(file string) []string {
+	wb, err := openFile(file)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	row, err := wb.Sheets[0].Row(rowGroups)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	groups := []string{}
+
+	row.ForEachCell(func(cell *xlsx.Cell) error {
+		if strings.Count(cell.Value, "-") == 2 {
+			groups = append(groups, cell.Value)
+		}
+
+		return nil
+	})
+
+	return groups
+}
+
+func GetLinks() []string {
+	resp, err := http.Get("https://mirea.ru/schedule")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	re := regexp.MustCompile(`http(s)?:\/\/.*\.xlsx`)
+	return re.FindAllString(string(body), -1)
 }
