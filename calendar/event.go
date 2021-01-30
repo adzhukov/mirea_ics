@@ -131,8 +131,9 @@ func (event *Event) writeSummary(w io.Writer) {
 	subject := strings.TrimSpace(event.Subject)
 	if classType != "" {
 		writeLong(w, "SUMMARY:", classType, " ", subject)
+	} else {
+		writeLong(w, "SUMMARY:", subject)
 	}
-	writeLong(w, "SUMMARY:", subject)
 }
 
 func (event *Event) endTime() time.Time {
