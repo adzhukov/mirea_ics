@@ -12,8 +12,13 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
+const (
+	rowTitle  = iota
+	rowGroups = iota
+)
+
 func getGroupColumn(sheet *xlsx.Sheet, group string) int {
-	row, _ := sheet.Row(1)
+	row, _ := sheet.Row(rowGroups)
 	column := 0
 	row.ForEachCell(func(cell *xlsx.Cell) error {
 		if group == cell.String() {
@@ -34,17 +39,19 @@ func semesterLength(group string) int {
 }
 
 func parseSemesterInfo(title string, s *calendar.Semester) {
-	if strings.Contains(title, "осеннего") {
+	switch {
+	case strings.Contains(title, "осеннего"):
 		s.Type = calendar.Autumn
-	} else if strings.Contains(title, "зимней") {
+	case strings.Contains(title, "зимней"):
 		s.Type = calendar.Winter
-	} else if strings.Contains(title, "весеннего") {
+	case strings.Contains(title, "весеннего"):
 		s.Type = calendar.Spring
-	} else if strings.Contains(title, "летней") {
+	case strings.Contains(title, "летней"):
 		s.Type = calendar.Summer
-	} else {
-		panic("Unable to parse semester type")
+	default:
+		log.Fatalln("Unable to parse semester type:", title)
 	}
+
 	s.Year = time.Now().Year()
 
 	splitted := strings.Split(title, "-")
@@ -78,7 +85,7 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 func ParseFile(file string, g string) {
 	wb, err := xlsx.OpenFile(file, xlsx.RowLimit(125))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	cal := calendar.Calendar{
@@ -86,12 +93,20 @@ func ParseFile(file string, g string) {
 	}
 
 	sheet := wb.Sheets[0]
-	row, _ := sheet.Row(0)
+
+	row, err := sheet.Row(rowTitle)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	title := ""
-	for i := 0; title == ""; i++ {
-		title = row.GetCell(i).String()
-	}
+	row.ForEachCell(func(cell *xlsx.Cell) error {
+		if cell.String() != "" {
+			title = cell.String()
+			return errors.New("Success")
+		}
+		return nil
+	})
 
 	parseSemesterInfo(title, &cal.Semester)
 	cal.Semester.End = semesterEnd(semesterLength(g), cal.Semester.Start)

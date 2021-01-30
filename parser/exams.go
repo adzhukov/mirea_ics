@@ -34,34 +34,30 @@ func parseExams(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 
 	state := stateDone
 
-	for {
-		if rowNumber > 125 {
-			return
-		}
-
+	for ; rowNumber < 125; rowNumber++ {
 		row, _ := sheet.Row(rowNumber)
 		date := row.GetCell(1).Value
 
 		cell := row.GetCell(groupColumn).Value
-		if cell != "" {
-			switch cell {
-			case "Зачет", "Экзамен", "Консультация":
-				current.ClassType = strings.ToUpper(string([]rune(cell)[:3]))
-				setExamTime(&current, date, row.GetCell(groupColumn+examTime).Value)
-				current.Classroom = row.GetCell(groupColumn + examRoom).Value
-				state++
-			default:
-				if state == stateType {
-					current.Subject = cell
-					state++
-				} else if state == stateLast {
-					current.Lecturer = cell
-					state = stateDone
-					cal.Classes = append(cal.Classes, current)
-				}
-			}
+		if cell == "" {
+			continue
 		}
 
-		rowNumber++
+		switch cell {
+		case "Зачет", "Экзамен", "Консультация":
+			current.ClassType = strings.ToUpper(string([]rune(cell)[:3]))
+			setExamTime(&current, date, row.GetCell(groupColumn+examTime).Value)
+			current.Classroom = row.GetCell(groupColumn + examRoom).Value
+			state++
+		default:
+			if state == stateType {
+				current.Subject = cell
+				state++
+			} else if state == stateLast {
+				current.Lecturer = cell
+				state = stateDone
+				cal.Classes = append(cal.Classes, current)
+			}
+		}
 	}
 }

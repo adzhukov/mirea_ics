@@ -19,8 +19,8 @@ const (
 )
 
 const (
-	timeColumn = 2
-	weekColumn = 4
+	columnTime = 2
+	columnWeek = 4
 )
 
 func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
@@ -36,13 +36,13 @@ func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 	for {
 		row, _ := sheet.Row(rowNumber)
 
-		weekType := row.GetCell(weekColumn).Value
+		weekType := row.GetCell(columnWeek).Value
 		if weekType == "" {
 			break
 		}
 
 		if weekType == "I" {
-			timeCell = row.GetCell(timeColumn).Value
+			timeCell = row.GetCell(columnTime).Value
 			current.WeekType = calendar.Odd
 			current.Num, _ = strconv.Atoi(row.GetCell(1).Value)
 			if current.Num == 1 {
