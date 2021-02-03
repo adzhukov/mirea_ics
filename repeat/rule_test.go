@@ -6,22 +6,6 @@ import (
 )
 
 func TestOneWeek(t *testing.T) {
-	subject := `1 н. Иностанный язык`
-	expected := ParsedSubject{
-		Rule: Rule{
-			Mode:  Once,
-			Dates: []int{1},
-		},
-		Subject:   `Иностанный язык`,
-		StartWeek: 1,
-	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
-	}
-}
-
-func TestOneWeekExtraSpaces(t *testing.T) {
 	subject := `1     н.      Иностанный язык   `
 	expected := ParsedSubject{
 		Rule: Rule{
