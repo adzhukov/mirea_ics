@@ -7,8 +7,6 @@ import (
 
 	"github.com/adzhukov/mirea_ics/calendar"
 	"github.com/adzhukov/mirea_ics/repeat"
-
-	"github.com/tealeg/xlsx/v3"
 )
 
 const (
@@ -23,18 +21,16 @@ const (
 	columnWeek = 4
 )
 
-func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
-	base, rowNumber := getGroupColumn(sheet, cal.Group), 3
-
+func (p Parser) normal() {
 	current := calendar.Event{
-		Semester: &cal.Semester,
+		Semester: &p.Calendar.Semester,
 		Weekday:  time.Sunday,
 	}
 
 	var timeCell string
 
-	for {
-		row, _ := sheet.Row(rowNumber)
+	for rowNumber := 3; rowNumber < 125; rowNumber++ {
+		row, _ := p.Sheet.Row(rowNumber)
 
 		weekType := row.GetCell(columnWeek).Value
 		if weekType == "" {
@@ -52,10 +48,10 @@ func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 			current.WeekType = calendar.Even
 		}
 
-		subjectValue := row.GetCell(base + offsetSubject).Value
-		classType := strings.Split(row.GetCell(base+offsetType).Value, "\n")
-		lecturer := strings.Split(row.GetCell(base+offsetLecturer).Value, "\n")
-		classroom := strings.Split(row.GetCell(base+offsetClassroom).Value, "\n")
+		subjectValue := row.GetCell(p.Column + offsetSubject).Value
+		classType := strings.Split(row.GetCell(p.Column+offsetType).Value, "\n")
+		lecturer := strings.Split(row.GetCell(p.Column+offsetLecturer).Value, "\n")
+		classroom := strings.Split(row.GetCell(p.Column+offsetClassroom).Value, "\n")
 
 		for i, subject := range strings.Split(subjectValue, "\n") {
 			if subject == "" {
@@ -85,9 +81,7 @@ func parseNormal(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 			}
 
 			setEventTime(&current, timeCell, parsed.StartWeek)
-			cal.Classes = append(cal.Classes, current)
+			p.Calendar.Classes = append(p.Calendar.Classes, current)
 		}
-
-		rowNumber++
 	}
 }

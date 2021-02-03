@@ -15,33 +15,49 @@ import (
 	"github.com/tealeg/xlsx/v3"
 )
 
+type Parser struct {
+	Sheet    *xlsx.Sheet
+	Calendar *calendar.Calendar
+	Column   int
+}
+
 const (
 	rowTitle  = iota
 	rowGroups = iota
 )
 
-func getGroupColumn(sheet *xlsx.Sheet, group string) int {
-	row, _ := sheet.Row(rowGroups)
-	column := 0
+func (p Parser) findGroup() {
+	row, err := p.Sheet.Row(rowGroups)
+	if err != nil {
+		log.Fatalln("Unable to parse file", err)
+	}
+
 	row.ForEachCell(func(cell *xlsx.Cell) error {
-		if group == cell.String() {
-			column, _ = cell.GetCoordinates()
+		if p.Calendar.Group == cell.String() {
+			p.Column, _ = cell.GetCoordinates()
 			return errors.New("Success")
 		}
 		return nil
 	})
-	return column
 }
 
-func semesterLength(group string) int {
-	if []rune(group)[2] == 'Б' {
-		return 16
+func (p Parser) parseSemesterInfo() {
+	row, err := p.Sheet.Row(rowTitle)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
-	return 17
-}
+	title := ""
+	row.ForEachCell(func(cell *xlsx.Cell) error {
+		if cell.String() != "" {
+			title = cell.String()
+			return errors.New("Success")
+		}
+		return nil
+	})
 
-func parseSemesterInfo(title string, s *calendar.Semester) {
+	s := &p.Calendar.Semester
+
 	switch {
 	case strings.Contains(title, "осеннего"):
 		s.Type = calendar.Autumn
@@ -70,7 +86,13 @@ func parseSemesterInfo(title string, s *calendar.Semester) {
 		s.Year--
 	}
 
+	length := 17
+	if []rune(p.Calendar.Group)[2] == 'Б' {
+		length = 16
+	}
+
 	s.Start = semesterStart(s.Year, s.Type)
+	s.End = semesterEnd(length, s.Start)
 
 	splitted = strings.Fields(title)
 	for i := range splitted {
@@ -111,37 +133,27 @@ func Parse(uri string, g string) {
 		log.Fatalln(err)
 	}
 
-	cal := calendar.Calendar{
-		Group: g,
+	p := Parser{
+		Calendar: &calendar.Calendar{Group: g},
+		Sheet:    wb.Sheets[0],
 	}
 
-	sheet := wb.Sheets[0]
-
-	row, err := sheet.Row(rowTitle)
-	if err != nil {
-		log.Fatalln(err)
+	p.findGroup()
+	if p.Column == 0 {
+		log.Printf("Could not find group %s in file %s\n", g, uri)
+		return
 	}
 
-	title := ""
-	row.ForEachCell(func(cell *xlsx.Cell) error {
-		if cell.String() != "" {
-			title = cell.String()
-			return errors.New("Success")
-		}
-		return nil
-	})
+	p.parseSemesterInfo()
 
-	parseSemesterInfo(title, &cal.Semester)
-	cal.Semester.End = semesterEnd(semesterLength(g), cal.Semester.Start)
-
-	switch cal.Semester.Type {
+	switch p.Calendar.Semester.Type {
 	case calendar.Autumn, calendar.Spring:
-		parseNormal(sheet, g, &cal)
+		p.normal()
 	case calendar.Winter, calendar.Summer:
-		parseExams(sheet, g, &cal)
+		p.exams()
 	}
 
-	cal.File()
+	p.Calendar.File()
 }
 
 func Groups(file string) []string {

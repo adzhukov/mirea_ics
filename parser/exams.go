@@ -5,8 +5,6 @@ import (
 
 	"github.com/adzhukov/mirea_ics/calendar"
 	"github.com/adzhukov/mirea_ics/repeat"
-
-	"github.com/tealeg/xlsx/v3"
 )
 
 const (
@@ -21,29 +19,27 @@ const (
 	examRoom = iota
 )
 
-func parseExams(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
-	groupColumn, rowNumber := getGroupColumn(sheet, cal.Group), 2
-
+func (p Parser) exams() {
 	current := calendar.Event{
-		Semester: &cal.Semester,
+		Semester: &p.Calendar.Semester,
 		Repeat:   repeat.Rule{Mode: repeat.Once},
 		Num:      0,
 	}
 
 	state := stateDone
 
-	for ; rowNumber < 125; rowNumber++ {
-		row, _ := sheet.Row(rowNumber)
+	for rowNumber := 2; rowNumber < 125; rowNumber++ {
+		row, _ := p.Sheet.Row(rowNumber)
 		date := row.GetCell(1).Value
-		cell := row.GetCell(groupColumn).Value
+		cell := row.GetCell(p.Column).Value
 
 		switch cell {
 		case "":
 			continue
 		case "Зачет", "Экзамен", "Консультация":
 			current.ClassType = strings.ToUpper(string([]rune(cell)[:3]))
-			setExamTime(&current, date, row.GetCell(groupColumn+examTime).Value)
-			current.Classroom = row.GetCell(groupColumn + examRoom).Value
+			setExamTime(&current, date, row.GetCell(p.Column+examTime).Value)
+			current.Classroom = row.GetCell(p.Column + examRoom).Value
 			state++
 		default:
 			if state == stateType {
@@ -52,7 +48,7 @@ func parseExams(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 			} else if state == stateLast {
 				current.Lecturer = cell
 				state = stateDone
-				cal.Classes = append(cal.Classes, current)
+				p.Calendar.Classes = append(p.Calendar.Classes, current)
 			}
 		}
 	}
