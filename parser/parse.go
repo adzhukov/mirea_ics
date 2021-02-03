@@ -168,7 +168,29 @@ func Groups(file string) []string {
 	return groups
 }
 
-func GetLinks() []string {
+func pattern(group string) string {
+	parts := []string{`http(s)?:\/\/.*`}
+
+	switch []rune(group)[0] {
+	case 'И':
+		parts = append(parts, `ИИТ.*`)
+	case 'К':
+		parts = append(parts, `ИК.*`)
+	}
+
+	switch []rune(group)[2] {
+	case 'М':
+		parts = append(parts, `маг.*`)
+	case 'Б':
+		parts = append(parts, `[^маг]{3}.*`)
+	}
+
+	parts = append(parts, `\.xlsx`)
+
+	return strings.Join(parts, "")
+}
+
+func GetLinks(group string) []string {
 	resp, err := http.Get("https://mirea.ru/schedule")
 	if err != nil {
 		log.Fatalln(err)
@@ -181,6 +203,6 @@ func GetLinks() []string {
 		log.Fatalln(err)
 	}
 
-	re := regexp.MustCompile(`http(s)?:\/\/.*\.xlsx`)
+	re := regexp.MustCompile(pattern(group))
 	return re.FindAllString(string(body), -1)
 }

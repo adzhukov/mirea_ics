@@ -22,9 +22,14 @@ func init() {
 
 func main() {
 	flag.Parse()
+	args := flag.Args()
 
 	if links {
-		links := parser.GetLinks()
+		group := "nil"
+		if len(args) != 0 {
+			group = args[0]
+		}
+		links := parser.GetLinks(group)
 		for _, link := range links {
 			fmt.Println(link)
 		}
@@ -43,7 +48,7 @@ func main() {
 		}
 	}
 
-	for _, group := range flag.Args() {
+	for _, group := range args {
 		parser.Parse(file, group)
 	}
 }
