@@ -2,7 +2,6 @@ package parser
 
 import (
 	"strings"
-	"time"
 
 	"github.com/adzhukov/mirea_ics/calendar"
 	"github.com/adzhukov/mirea_ics/repeat"
@@ -27,7 +26,6 @@ func parseExams(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 
 	current := calendar.Event{
 		Semester: &cal.Semester,
-		Weekday:  time.Sunday,
 		Repeat:   repeat.Rule{Mode: repeat.Once},
 		Num:      0,
 	}
@@ -37,13 +35,11 @@ func parseExams(sheet *xlsx.Sheet, group string, cal *calendar.Calendar) {
 	for ; rowNumber < 125; rowNumber++ {
 		row, _ := sheet.Row(rowNumber)
 		date := row.GetCell(1).Value
-
 		cell := row.GetCell(groupColumn).Value
-		if cell == "" {
-			continue
-		}
 
 		switch cell {
+		case "":
+			continue
 		case "Зачет", "Экзамен", "Консультация":
 			current.ClassType = strings.ToUpper(string([]rune(cell)[:3]))
 			setExamTime(&current, date, row.GetCell(groupColumn+examTime).Value)

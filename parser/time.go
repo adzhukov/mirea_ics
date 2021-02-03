@@ -31,11 +31,23 @@ func semesterEnd(length int, start time.Time) time.Time {
 	return start.AddDate(0, 0, length*7)
 }
 
-func setExamTime(event *calendar.Event, dateCell string, timeCell string) {
-	timeSplit := strings.Split(timeCell, "-")
-	hours, _ := strconv.Atoi(timeSplit[0])
-	minutes, _ := strconv.Atoi(timeSplit[1])
+func cellToTime(cell string) (int, int) {
+	splitted := strings.Split(cell, "-")
+	hours, err := strconv.Atoi(splitted[0])
+	if err != nil {
+		log.Fatalln("Unable to parse time", err)
+	}
 
+	minutes, err := strconv.Atoi(splitted[1])
+	if err != nil {
+		log.Fatalln("Unable to parse time", err)
+	}
+
+	return hours, minutes
+}
+
+func setExamTime(event *calendar.Event, dateCell string, timeCell string) {
+	hours, minutes := cellToTime(timeCell)
 	localTime := time.Minute*time.Duration(minutes) + time.Hour*time.Duration(hours)
 
 	days := strings.Fields(dateCell)
@@ -60,9 +72,7 @@ func setEventTime(event *calendar.Event, timeCell string, start int) {
 		startDate = startDate.AddDate(0, 0, 14)
 	}
 
-	splitted := strings.Split(timeCell, "-")
-	hours, _ := strconv.Atoi(splitted[0])
-	minutes, _ := strconv.Atoi(splitted[1])
+	hours, minutes := cellToTime(timeCell)
 
 	localTime := time.Minute*time.Duration(minutes) + time.Hour*time.Duration(hours)
 	event.StartTime = startDate.Add(localTime)
