@@ -21,7 +21,7 @@ const (
 	columnWeek = 4
 )
 
-func (p Parser) normal() {
+func (p *Parser) normal() {
 	current := calendar.Event{
 		Semester: &p.Calendar.Semester,
 		Weekday:  time.Sunday,

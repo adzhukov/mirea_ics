@@ -19,7 +19,7 @@ const (
 	examRoom = iota
 )
 
-func (p Parser) exams() {
+func (p *Parser) exams() {
 	current := calendar.Event{
 		Semester: &p.Calendar.Semester,
 		Repeat:   repeat.Rule{Mode: repeat.Once},

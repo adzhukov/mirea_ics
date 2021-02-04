@@ -26,7 +26,7 @@ const (
 	rowGroups = iota
 )
 
-func (p Parser) findGroup() {
+func (p *Parser) findGroup() {
 	row, err := p.Sheet.Row(rowGroups)
 	if err != nil {
 		log.Fatalln("Unable to parse file", err)
@@ -41,7 +41,7 @@ func (p Parser) findGroup() {
 	})
 }
 
-func (p Parser) parseSemesterInfo() {
+func (p *Parser) parseSemesterInfo() {
 	row, err := p.Sheet.Row(rowTitle)
 	if err != nil {
 		log.Fatalln(err)
