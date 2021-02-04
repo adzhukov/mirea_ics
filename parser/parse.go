@@ -86,14 +86,6 @@ func (p *Parser) parseSemesterInfo() {
 		s.Year--
 	}
 
-	length := 17
-	if []rune(p.Calendar.Group)[2] == 'Б' {
-		length = 16
-	}
-
-	s.Start = semesterStart(s.Year, s.Type)
-	s.End = semesterEnd(length, s.Start)
-
 	splitted = strings.Fields(title)
 	for i := range splitted {
 		if splitted[i] == "курса" {
@@ -101,10 +93,25 @@ func (p *Parser) parseSemesterInfo() {
 			if err != nil {
 				log.Println(err)
 			}
-			s.Num = n
+			s.Num = n * 2
+			if s.Type == calendar.Autumn || s.Type == calendar.Winter {
+				s.Num--
+			}
 			break
 		}
 	}
+
+	length := 17
+	if []rune(p.Calendar.Group)[2] == 'Б' {
+		if s.Num == 8 {
+			length = 8
+		} else {
+			length = 16
+		}
+	}
+
+	s.Start = semesterStart(s.Year, s.Type)
+	s.End = semesterEnd(length, s.Start)
 }
 
 func openFile(uri string) (*xlsx.File, error) {

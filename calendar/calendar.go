@@ -58,15 +58,11 @@ func (cal Calendar) WriteTo(w io.Writer) {
 }
 
 func (cal Calendar) name() string {
-	n := cal.Semester.Num * 2
 	t := "Семестр"
-	if cal.Semester.Type == Autumn || cal.Semester.Type == Winter {
-		n--
-	}
 	if cal.Semester.Type == Winter || cal.Semester.Type == Summer {
 		t = "Сессия"
 	}
-	return fmt.Sprintf("%s %d %s", cal.Group, n, t)
+	return fmt.Sprintf("%s %d %s", cal.Group, cal.Semester.Num, t)
 }
 
 func (cal Calendar) writeHeader(w io.Writer) {
