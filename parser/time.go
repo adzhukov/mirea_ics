@@ -19,12 +19,21 @@ func semesterStart(year int, semester calendar.SemesterType) time.Time {
 	case calendar.Winter:
 		month, day = time.January, 1
 	case calendar.Spring:
-		month, day = time.February, 13
+		month, day = time.February, 11
 	case calendar.Summer:
 		month, day = time.June, 1
 	}
 
-	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+	date := time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+
+	switch date.Weekday() {
+	case time.Saturday:
+		date = date.AddDate(0, 0, 2)
+	case time.Sunday:
+		date = date.AddDate(0, 0, 1)
+	}
+
+	return date
 }
 
 func semesterEnd(length int, start time.Time) time.Time {
