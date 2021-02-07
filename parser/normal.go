@@ -84,7 +84,31 @@ func (p *Parser) normal() {
 			current.Subject = parsed.Subject
 
 			setEventTime(&current, timeCell, parsed.StartWeek)
-			p.Calendar.Classes = append(p.Calendar.Classes, current)
+
+			if isValidEvent(&current) {
+				p.Calendar.Classes = append(p.Calendar.Classes, current)
+			}
 		}
 	}
+}
+
+func isValidEvent(e *calendar.Event) bool {
+	if strings.HasPrefix(e.Subject, "……") {
+		return false
+	}
+
+	if strings.ToUpper(e.ClassType) == "С/Р" {
+		return false
+	}
+
+	switch strings.TrimSpace(e.Subject) {
+	case "Военная подготовка":
+		return false
+	case "Военная", "подготовка":
+		return false
+	case "День", "самостоятельных", "занятий":
+		return false
+	}
+
+	return true
 }
