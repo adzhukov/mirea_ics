@@ -6,13 +6,13 @@ import (
 )
 
 func TestOneWeek(t *testing.T) {
-	subject := `1     н.      Иностанный язык   `
+	subject := `1     н.      Иностранный язык   `
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Once,
 			Dates: []int{1},
 		},
-		Subject:   `Иностанный язык`,
+		Subject:   `Иностранный язык`,
 		StartWeek: 1,
 	}
 	result := Parse(subject)
@@ -22,10 +22,10 @@ func TestOneWeek(t *testing.T) {
 }
 
 func TestAny(t *testing.T) {
-	subject := `Иностанный язык`
+	subject := `Иностранный язык`
 	expected := ParsedSubject{
 		Rule:    Rule{Mode: Any},
-		Subject: `Иностанный язык`,
+		Subject: `Иностранный язык`,
 	}
 	result := Parse(subject)
 	if !reflect.DeepEqual(result, expected) {
@@ -34,10 +34,10 @@ func TestAny(t *testing.T) {
 }
 
 func TestAnyExtraSpaces(t *testing.T) {
-	subject := `    Иностанный язык    `
+	subject := `    Иностранный язык    `
 	expected := ParsedSubject{
 		Rule:    Rule{Mode: Any},
-		Subject: `Иностанный язык`,
+		Subject: `Иностранный язык`,
 	}
 	result := Parse(subject)
 	if !reflect.DeepEqual(result, expected) {
@@ -46,13 +46,13 @@ func TestAnyExtraSpaces(t *testing.T) {
 }
 
 func TestRange(t *testing.T) {
-	subject := `  3   -     17    н. Иностанный язык  `
+	subject := `  3   -     17    н. Иностранный язык  `
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Range,
 			Dates: []int{3, 17},
 		},
-		Subject:   `Иностанный язык`,
+		Subject:   `Иностранный язык`,
 		StartWeek: 3,
 	}
 	result := Parse(subject)
@@ -62,13 +62,29 @@ func TestRange(t *testing.T) {
 }
 
 func TestEnum(t *testing.T) {
-	subject := ` 3,5,  7 , 9 н. Иностанный язык `
+	subject := ` 3,5,  7 , 9 н. Иностранный язык `
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Enum,
 			Dates: []int{3, 5, 7, 9},
 		},
-		Subject:   `Иностанный язык`,
+		Subject:   `Иностранный язык`,
+		StartWeek: 3,
+	}
+	result := Parse(subject)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+	}
+}
+
+func TestEnumCompact(t *testing.T) {
+	subject := ` 3,5,7,9н Иностранный язык`
+	expected := ParsedSubject{
+		Rule: Rule{
+			Mode:  Enum,
+			Dates: []int{3, 5, 7, 9},
+		},
+		Subject:   `Иностранный язык`,
 		StartWeek: 3,
 	}
 	result := Parse(subject)
@@ -84,7 +100,7 @@ func TestExcept(t *testing.T) {
 			Mode:   Any,
 			Except: []int{11},
 		},
-		Subject: `Иностанный язык`,
+		Subject: `Иностранный язык`,
 	}
 	result := Parse(subject)
 	if !reflect.DeepEqual(result, expected) {
@@ -93,13 +109,13 @@ func TestExcept(t *testing.T) {
 }
 
 func TestExceptEnum(t *testing.T) {
-	subject := `кр 5,7 ,  11  н. Иностанный язык  `
+	subject := `кр 5,7 ,  11  н. Иностранный язык  `
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:   Any,
 			Except: []int{5, 7, 11},
 		},
-		Subject: `Иностанный язык`,
+		Subject: `Иностранный язык`,
 	}
 	result := Parse(subject)
 	if !reflect.DeepEqual(result, expected) {
@@ -108,10 +124,10 @@ func TestExceptEnum(t *testing.T) {
 }
 
 func TestStartAt(t *testing.T) {
-	subject := `с 11  н. Иностанный язык  `
+	subject := `с 11  н. Иностранный язык  `
 	expected := ParsedSubject{
 		Rule:      Rule{Mode: Any},
-		Subject:   `Иностанный язык`,
+		Subject:   `Иностранный язык`,
 		StartWeek: 11,
 	}
 	result := Parse(subject)

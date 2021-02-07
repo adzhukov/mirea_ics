@@ -29,24 +29,31 @@ const (
 )
 
 func Parse(subject string) ParsedSubject {
-	var result ParsedSubject
+	result := ParsedSubject{
+		Rule:    Rule{Mode: Any},
+		Subject: strings.TrimSpace(subject),
+	}
 
-	splitted := strings.SplitN(subject, "н.", 2)
-
+	splitted := strings.SplitN(subject, "н", 2)
 	if len(splitted) != 2 {
-		result.Rule.Mode = Any
-		result.Subject = strings.TrimSpace(subject)
+		return result
+	}
+
+	hasNumbers := strings.ContainsAny(splitted[0], "0123456789")
+	if !hasNumbers {
 		return result
 	}
 
 	dates := splitted[0]
+	splitted[1] = strings.Trim(splitted[1], ".")
 	result.Subject = strings.TrimSpace(splitted[1])
 
-	if strings.Count(dates, "-") == 1 {
+	switch {
+	case strings.Count(dates, "-") == 1:
 		result.parseAsRange(dates)
-	} else if strings.Count(dates, ",") > 0 {
+	case strings.Count(dates, ",") > 0:
 		result.parseAsEnum(dates)
-	} else {
+	default:
 		result.parseAsSingle(dates)
 	}
 
