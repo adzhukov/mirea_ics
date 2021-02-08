@@ -6,7 +6,11 @@ import (
 )
 
 func TestOneWeek(t *testing.T) {
-	subject := `1     н.      Иностранный язык   `
+	subjects := []string{
+		`1     н.....      Иностранный язык   `,
+		`1н Иностранный язык`,
+	}
+
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Once,
@@ -15,38 +19,40 @@ func TestOneWeek(t *testing.T) {
 		Subject:   `Иностранный язык`,
 		StartWeek: 1,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestAny(t *testing.T) {
-	subject := `Иностранный язык`
-	expected := ParsedSubject{
-		Rule:    Rule{Mode: Any},
-		Subject: `Иностранный язык`,
+	subjects := []string{
+		`Иностранный язык`,
+		`    Иностранный язык    `,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
-	}
-}
 
-func TestAnyExtraSpaces(t *testing.T) {
-	subject := `    Иностранный язык    `
 	expected := ParsedSubject{
 		Rule:    Rule{Mode: Any},
 		Subject: `Иностранный язык`,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestRange(t *testing.T) {
-	subject := `  3   -     17    н. Иностранный язык  `
+	subjects := []string{
+		`  3   -     17    н... Иностранный язык  `,
+		`3-17н Иностранный язык`,
+	}
+
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Range,
@@ -55,30 +61,22 @@ func TestRange(t *testing.T) {
 		Subject:   `Иностранный язык`,
 		StartWeek: 3,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestEnum(t *testing.T) {
-	subject := ` 3,5,  7 , 9 н. Иностранный язык `
-	expected := ParsedSubject{
-		Rule: Rule{
-			Mode:  Enum,
-			Dates: []int{3, 5, 7, 9},
-		},
-		Subject:   `Иностранный язык`,
-		StartWeek: 3,
+	subjects := []string{
+		` 3,5,  7 , 9 н. Иностранный язык `,
+		`3,5,7,9н Иностранный язык`,
+		`3,5,7,9   н.... Иностранный язык `,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
-	}
-}
 
-func TestEnumCompact(t *testing.T) {
-	subject := ` 3,5,7,9н Иностранный язык`
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:  Enum,
@@ -87,14 +85,23 @@ func TestEnumCompact(t *testing.T) {
 		Subject:   `Иностранный язык`,
 		StartWeek: 3,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestExcept(t *testing.T) {
-	subject := `кр.  11  н. Иностранный язык  `
+	subjects := []string{
+		`  кр...  11  н... Иностранный язык  `,
+		`кр11н Иностранный язык`,
+		`кр.11н. Иностранный язык`,
+		`кр 11 н Иностранный язык`,
+	}
+
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:   Any,
@@ -102,14 +109,22 @@ func TestExcept(t *testing.T) {
 		},
 		Subject: `Иностранный язык`,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestExceptEnum(t *testing.T) {
-	subject := `кр 5,7 ,  11  н. Иностранный язык  `
+	subjects := []string{
+		`кр.. 5,7 ,  11  н... Иностранный язык  `,
+		`кр5,7,11н Иностранный язык`,
+		`кр 5,7,11 н Иностранный язык`,
+	}
+
 	expected := ParsedSubject{
 		Rule: Rule{
 			Mode:   Any,
@@ -117,21 +132,31 @@ func TestExceptEnum(t *testing.T) {
 		},
 		Subject: `Иностранный язык`,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
 
 func TestStartAt(t *testing.T) {
-	subject := `с 11  н. Иностранный язык  `
+	subjects := []string{
+		`с 11  н... Иностранный язык  `,
+		`с11н Иностранный язык`,
+	}
+
 	expected := ParsedSubject{
 		Rule:      Rule{Mode: Any},
 		Subject:   `Иностранный язык`,
 		StartWeek: 11,
 	}
-	result := Parse(subject)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
 	}
 }
