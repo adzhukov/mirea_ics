@@ -63,8 +63,8 @@ func Parse(subject string) ParsedSubject {
 func (result *ParsedSubject) parseAsSingle(dates string) {
 	trimmed := strings.TrimSpace(dates)
 
-	if strings.HasPrefix(trimmed, "с ") {
-		weekString := strings.TrimPrefix(trimmed, "с ")
+	if strings.HasPrefix(trimmed, "с") {
+		weekString := strings.TrimPrefix(trimmed, "с")
 		week, err := strconv.Atoi(strings.TrimSpace(weekString))
 		if err != nil {
 			log.Panic(err)
@@ -74,8 +74,8 @@ func (result *ParsedSubject) parseAsSingle(dates string) {
 		return
 	}
 
-	if strings.HasPrefix(trimmed, "кр. ") {
-		weekString := strings.TrimPrefix(trimmed, "кр. ")
+	if strings.HasPrefix(trimmed, "кр") {
+		weekString := strings.TrimLeft(trimmed, "кр. ")
 		week, err := strconv.Atoi(strings.TrimSpace(weekString))
 		if err != nil {
 			log.Panic(err)
@@ -113,8 +113,8 @@ func (result *ParsedSubject) parseAsRange(dates string) {
 
 func (result *ParsedSubject) parseAsEnum(dates string) {
 	trimmed := strings.TrimSpace(dates)
-	if strings.HasPrefix(trimmed, "кр ") {
-		weekString := strings.TrimPrefix(trimmed, "кр ")
+	if strings.HasPrefix(trimmed, "кр") {
+		weekString := strings.TrimLeft(trimmed, "кр. ")
 		result.Rule.Mode = Any
 		weeks := strings.Split(weekString, ",")
 		for _, week := range weeks {
