@@ -93,10 +93,8 @@ func groupYear(group []rune) int {
 		return 0
 	}
 
-	y += 2000
 	now := time.Now()
-
-	year := now.Year() - y + 1
+	year := now.Year() - y - 1999
 	if now.Month() < time.August {
 		year--
 	}

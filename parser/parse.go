@@ -218,10 +218,12 @@ func filterGroups(body []byte, str string) []string {
 	}
 
 	if year := groupYear(group); year != 0 {
-		filters = append(filters, func(s string) bool {
-			return strings.Contains(s, fmt.Sprintf("%dк", year)) ||
-				strings.Contains(s, fmt.Sprintf("%d к", year))
-		})
+		filters = append(filters, func(year int) func(string) bool {
+			re := regexp.MustCompile(fmt.Sprintf(`%d(?:_-\s)?к`, year))
+			return func(s string) bool {
+				return re.MatchString(s)
+			}
+		}(year))
 	}
 
 	results := []string{}
