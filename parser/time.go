@@ -86,3 +86,20 @@ func setEventTime(event *calendar.Event, timeCell string, start int) {
 	localTime := time.Minute*time.Duration(minutes) + time.Hour*time.Duration(hours)
 	event.StartTime = startDate.Add(localTime)
 }
+
+func groupYear(group []rune) int {
+	y, err := strconv.Atoi(string(group[len(group)-2:]))
+	if err != nil {
+		return 0
+	}
+
+	y += 2000
+	now := time.Now()
+
+	year := now.Year() - y + 1
+	if now.Month() < time.August {
+		year--
+	}
+
+	return year
+}

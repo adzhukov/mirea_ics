@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -187,26 +188,58 @@ func Groups(file string) []string {
 	return groups
 }
 
-func pattern(group string) string {
-	parts := []string{`http(s)?:\/\/.*`}
+func filterGroups(body []byte, str string) []string {
+	re := regexp.MustCompile(`https?:\/\/.*\.xlsx`)
+	links := re.FindAllString(string(body), -1)
 
-	switch []rune(group)[0] {
+	filters := []func(string) bool{}
+
+	group := []rune(str)
+	switch group[0] {
 	case 'И':
-		parts = append(parts, `ИИТ.*`)
+		filters = append(filters, func(s string) bool {
+			return strings.Contains(s, `ИИТ`)
+		})
 	case 'К':
-		parts = append(parts, `ИК.*`)
+		filters = append(filters, func(s string) bool {
+			return strings.Contains(s, `ИК`)
+		})
 	}
 
-	switch []rune(group)[2] {
+	switch group[2] {
 	case 'М':
-		parts = append(parts, `маг.*`)
+		filters = append(filters, func(s string) bool {
+			return strings.Contains(s, `маг`)
+		})
 	case 'Б':
-		parts = append(parts, `[^маг]{3}.*`)
+		filters = append(filters, func(s string) bool {
+			return !strings.Contains(s, `маг`)
+		})
 	}
 
-	parts = append(parts, `\.xlsx`)
+	if year := groupYear(group); year != 0 {
+		filters = append(filters, func(s string) bool {
+			return strings.Contains(s, fmt.Sprintf("%dк", year)) ||
+				strings.Contains(s, fmt.Sprintf("%d к", year))
+		})
+	}
 
-	return strings.Join(parts, "")
+	results := []string{}
+	for _, link := range links {
+		valid := true
+		for _, filter := range filters {
+			if !filter(link) {
+				valid = false
+				break
+			}
+		}
+
+		if valid {
+			results = append(results, link)
+		}
+	}
+
+	return results
 }
 
 func GetLinks(group string) []string {
@@ -222,6 +255,5 @@ func GetLinks(group string) []string {
 		log.Fatalln(err)
 	}
 
-	re := regexp.MustCompile(pattern(group))
-	return re.FindAllString(string(body), -1)
+	return filterGroups(body, group)
 }
