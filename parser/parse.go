@@ -141,6 +141,8 @@ func Parse(uri string, g string) {
 		log.Fatalln(err)
 	}
 
+	g = normalizeGroup(g)
+
 	p := Parser{
 		Calendar: &calendar.Calendar{Group: g},
 		Sheet:    wb.Sheets[0],
@@ -244,6 +246,33 @@ func filterGroups(body []byte, str string) []string {
 	return results
 }
 
+func normalizeGroup(group string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case 'i', 'I':
+			return 'И'
+		case 'k', 'K':
+			return 'К'
+		case 'm', 'M':
+			return 'М'
+		case 'b', 'B':
+			return 'Б'
+		case 'o', 'O':
+			return 'О'
+		case 'r', 'R':
+			return 'Р'
+		case 'v', 'V':
+			return 'В'
+		case 'n', 'N':
+			return 'Н'
+		case 'a', 'A':
+			return 'А'
+		default:
+			return r
+		}
+	}, group)
+}
+
 func GetLinks(group string) []string {
 	resp, err := http.Get("https://mirea.ru/schedule")
 	if err != nil {
@@ -257,5 +286,5 @@ func GetLinks(group string) []string {
 		log.Fatalln(err)
 	}
 
-	return filterGroups(body, group)
+	return filterGroups(body, normalizeGroup(group))
 }
