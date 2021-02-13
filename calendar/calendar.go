@@ -65,13 +65,24 @@ func (cal Calendar) name() string {
 	return fmt.Sprintf("%s %d %s", cal.Group, cal.Semester.Num, t)
 }
 
+func (cal Calendar) color() string {
+	switch cal.Semester.Type {
+	case Autumn, Spring:
+		return "86F79B"
+	case Winter, Summer:
+		return "E23E24"
+	}
+
+	return "FFFFFF"
+}
+
 func (cal Calendar) writeHeader(w io.Writer) {
 	write(w, "BEGIN:VCALENDAR")
 	write(w, "METHOD:PUBLISH")
 	write(w, "VERSION:2.0")
 	writeLong(w, "X-WR-CALNAME:", cal.name())
 	write(w, "PRODID:-//Apple Inc.//Mac OS X 10.15.5//EN")
-	write(w, "X-APPLE-CALENDAR-COLOR:#FFCC00")
+	write(w, "X-APPLE-CALENDAR-COLOR:#", cal.color())
 	write(w, "X-WR-TIMEZONE:Europe/Moscow")
 	write(w, "CALSCALE:GREGORIAN")
 }
