@@ -24,7 +24,6 @@ func (p *Parser) exams() {
 	current := calendar.Event{
 		Semester: &p.Calendar.Semester,
 		Repeat:   repeat.Rule{Mode: repeat.Once},
-		Num:      0,
 	}
 
 	state := stateDone

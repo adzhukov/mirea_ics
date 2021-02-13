@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -40,8 +39,7 @@ func (p *Parser) normal() {
 		if weekType == "I" {
 			timeCell = row.GetCell(columnTime).Value
 			current.WeekType = calendar.Odd
-			current.Num, _ = strconv.Atoi(row.GetCell(1).Value)
-			if current.Num == 1 {
+			if strings.TrimSpace(row.GetCell(1).Value) == "1" {
 				current.Weekday++
 			}
 		} else {

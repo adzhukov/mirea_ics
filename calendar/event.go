@@ -26,7 +26,6 @@ type Event struct {
 	StartTime time.Time
 	Lecturer  string
 	WeekType  WeekType
-	Num       int
 	Repeat    repeat.Rule
 	Weekday   time.Weekday
 	Semester  *Semester
@@ -150,15 +149,14 @@ func (event Event) WriteTo(w io.Writer) {
 	write(w, "DTEND;TZID=Europe/Moscow:", event.endTime().Format(timeFormat))
 
 	write(w, "UID:", uuid.New().String())
-
-	event.writeRepeatRule(w)
-	event.writeAppleLocation(w)
-	event.writeLocation(w)
-
-	write(w, "X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:DISABLED")
 	write(w, "SEQUENCE:0")
 
 	event.writeSummary(w)
+	event.writeLocation(w)
+	event.writeAppleLocation(w)
+	event.writeRepeatRule(w)
+
+	write(w, "X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:DISABLED")
 
 	writeLong(w, "DESCRIPTION:", event.Lecturer)
 

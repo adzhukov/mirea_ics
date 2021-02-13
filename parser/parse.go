@@ -141,10 +141,8 @@ func Parse(uri string, g string) {
 		log.Fatalln(err)
 	}
 
-	g = normalizeGroup(g)
-
 	p := Parser{
-		Calendar: &calendar.Calendar{Group: g},
+		Calendar: &calendar.Calendar{Group: normalizeGroup(g)},
 		Sheet:    wb.Sheets[0],
 	}
 
