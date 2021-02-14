@@ -72,11 +72,13 @@ func enumsIsRange(event *Event) int {
 }
 
 func findMissingWeeks(event *Event) {
-	prev := event.Repeat.Dates[0] - 2
+	first := event.Repeat.Dates[0]
+	prev := first - 2
 	for _, week := range event.Repeat.Dates {
-		for prev+2 != week {
+		prev += 2
+		for prev != week {
+			event.Repeat.Except = append(event.Repeat.Except, prev-first+1)
 			prev += 2
-			event.Repeat.Except = append(event.Repeat.Except, week)
 		}
 	}
 }
@@ -93,10 +95,10 @@ func (event *Event) writeRepeatRule(w io.Writer) {
 	case repeat.Any:
 		endDate = event.Semester.End
 	case repeat.Enum:
+		last := event.Repeat.Dates[len(event.Repeat.Dates)-1]
+		endDate = event.Semester.Start.AddDate(0, 0, 7*last)
 		if i := enumsIsRange(event); i != 0 {
 			interval = i
-			last := event.Repeat.Dates[len(event.Repeat.Dates)-1]
-			endDate = event.Semester.Start.AddDate(0, 0, 7*last)
 		} else {
 			findMissingWeeks(event)
 		}
