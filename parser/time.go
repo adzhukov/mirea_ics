@@ -69,8 +69,8 @@ func setExamTime(event *calendar.Event, dateCell string, timeCell string) {
 	event.StartTime = startDate.Add(localTime)
 }
 
-func setEventTime(event *calendar.Event, timeCell string, start int) {
-	daysToEvent := int(time.Monday - event.Semester.Start.Weekday() + event.Weekday - 1)
+func setEventTime(event *calendar.Event, timeCell string, start int, weekday time.Weekday) {
+	daysToEvent := int(time.Monday - event.Semester.Start.Weekday() + weekday - 1)
 	startDate := event.Semester.Start.AddDate(0, 0, daysToEvent)
 
 	if start != 0 {

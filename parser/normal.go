@@ -23,10 +23,10 @@ const (
 func (p *Parser) normal() {
 	current := calendar.Event{
 		Semester: &p.Calendar.Semester,
-		Weekday:  time.Sunday,
 	}
 
 	var timeCell string
+	weekday := time.Sunday
 
 	for rowNumber := 3; rowNumber < 125; rowNumber++ {
 		row, _ := p.Sheet.Row(rowNumber)
@@ -40,7 +40,7 @@ func (p *Parser) normal() {
 			timeCell = row.GetCell(columnTime).Value
 			current.WeekType = calendar.Odd
 			if strings.TrimSpace(row.GetCell(1).Value) == "1" {
-				current.Weekday++
+				weekday++
 			}
 		} else {
 			current.WeekType = calendar.Even
@@ -81,7 +81,7 @@ func (p *Parser) normal() {
 			current.Repeat = parsed.Rule
 			current.Subject = parsed.Subject
 
-			setEventTime(&current, timeCell, parsed.StartWeek)
+			setEventTime(&current, timeCell, parsed.StartWeek, weekday)
 
 			if isValidEvent(&current) {
 				p.Calendar.Classes = append(p.Calendar.Classes, current)

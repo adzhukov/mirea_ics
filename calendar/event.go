@@ -27,7 +27,6 @@ type Event struct {
 	Lecturer  string
 	WeekType  WeekType
 	Repeat    repeat.Rule
-	Weekday   time.Weekday
 	Semester  *Semester
 }
 
@@ -107,7 +106,7 @@ func (event *Event) writeRepeatRule(w io.Writer) {
 		"RRULE:FREQ=WEEKLY;",
 		"INTERVAL=", interval, ";",
 		"UNTIL=", endDate.UTC().Format(timeFormat), ";",
-		"BYDAY=", strings.ToUpper(event.Weekday.String()[:2]), ";",
+		"BYDAY=", strings.ToUpper(event.StartTime.Weekday().String()[:2]), ";",
 		"WKST=SU;")
 
 	if len(event.Repeat.Except) != 0 {
