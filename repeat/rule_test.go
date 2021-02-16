@@ -160,3 +160,29 @@ func TestStartAt(t *testing.T) {
 		}
 	}
 }
+
+func TestRangeWithEx(t *testing.T) {
+	subjects := []string{
+		`  3   -     17    н... (кр.... 11 н...) Иностранный язык  `,
+		` 3 -17  н. кр  11 н. Иностранный язык `,
+		`3-17н кр11н. Иностранный язык`,
+		`3-17н (кр11н) Иностранный язык`,
+	}
+
+	expected := ParsedSubject{
+		Rule: Rule{
+			Mode:  Range,
+			Dates: []int{3, 17},
+			Except: []int{11},
+		},
+		Subject:   `Иностранный язык`,
+		StartWeek: 3,
+	}
+
+	for _, subject := range subjects {
+		result := Parse(subject)
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected: %v\nGot: %v\n", expected, result)
+		}
+	}
+}

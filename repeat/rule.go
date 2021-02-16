@@ -34,13 +34,8 @@ func Parse(subject string) ParsedSubject {
 		Subject: strings.TrimSpace(subject),
 	}
 
-	splitted := strings.SplitN(subject, "н", 2)
-	if len(splitted) != 2 {
-		return result
-	}
-
-	hasNumbers := strings.ContainsAny(splitted[0], "0123456789")
-	if !hasNumbers {
+	splitted, ok := split(subject)
+	if !ok {
 		return result
 	}
 
@@ -57,7 +52,23 @@ func Parse(subject string) ParsedSubject {
 		result.parseAsSingle(dates)
 	}
 
+	checkForExDate(&result)
+
 	return result
+}
+
+func split(subject string) ([]string, bool) {
+	splitted := strings.SplitN(subject, "н", 2)
+	if len(splitted) != 2 {
+		return splitted, false
+	}
+
+	hasNumbers := strings.ContainsAny(splitted[0], "0123456789")
+	if !hasNumbers {
+		return splitted, false
+	}
+
+	return splitted, true
 }
 
 func (result *ParsedSubject) parseAsSingle(dates string) {
@@ -139,4 +150,24 @@ func (result *ParsedSubject) parseAsEnum(dates string) {
 
 	result.StartWeek = result.Rule.Dates[0]
 	result.Rule.Mode = Enum
+}
+
+func checkForExDate(result *ParsedSubject) {
+	splitted, ok := split(result.Subject)
+	if !ok {
+		return
+	}
+
+	trimmed := strings.Trim(splitted[0], "() .")
+	if !strings.HasPrefix(trimmed, "кр") {
+		return
+	}
+
+	week, err := strconv.Atoi(strings.Trim(trimmed, "кр. "))
+	if err != nil {
+		return
+	}
+
+	result.Rule.Except = append(result.Rule.Except, week)
+	result.Subject = strings.TrimLeft(splitted[1], " ).")
 }
