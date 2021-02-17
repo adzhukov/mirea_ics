@@ -58,6 +58,10 @@ func (cal Calendar) WriteTo(w io.Writer) {
 }
 
 func (cal Calendar) name() string {
+	if cal.Semester.Type == 0 {
+		return cal.Group
+	}
+
 	t := "Семестр"
 	if cal.Semester.Type == Winter || cal.Semester.Type == Summer {
 		t = "Сессия"

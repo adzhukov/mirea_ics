@@ -12,12 +12,14 @@ var (
 	file  string
 	list  bool
 	links bool
+	merge bool
 )
 
 func init() {
 	flag.StringVar(&file, "file", "", ".xlsx URI")
 	flag.BoolVar(&list, "list", false, "print all groups in file")
 	flag.BoolVar(&links, "links", false, "print all file links")
+	flag.BoolVar(&merge, "merge", false, "merge calendars")
 }
 
 func main() {
@@ -32,6 +34,14 @@ func main() {
 		links := parser.GetLinks(group)
 		for _, link := range links {
 			fmt.Println(link)
+		}
+
+		return
+	}
+
+	if merge {
+		for _, group := range args {
+			parser.Merge(group)
 		}
 
 		return
