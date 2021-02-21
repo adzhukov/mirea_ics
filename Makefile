@@ -24,7 +24,7 @@ update: download
 	git add -f *.ics
 
 	git diff --staged --color \
-	  | grep -P '\e\[3[12]m' \
+	  | perl -nle 'print if /\e\[3[12]m/' \
 	  | grep -vE 'DTSTAMP|CREATED|LAST-MODIFIED|UID|@@'
 
 .PHONY: test
