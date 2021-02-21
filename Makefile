@@ -7,14 +7,13 @@ $(PROJECT):
 .PHONY: build ## Build project
 build: $(PROJECT)
 
-.PHONY: download
-download: build
+${GROUP}.ics: build
 	./$(PROJECT) -links ${GROUP} \
 	  | xargs -I % ./$(PROJECT) -file % ${GROUP}
 	./$(PROJECT) -merge $(GROUP)
 
 .PHONY: update
-update: download
+update: ${GROUP}.ics
 	git add -f *.ics
 	git stash
 	git checkout --orphan ${GROUP} || git switch ${GROUP} 
@@ -25,7 +24,8 @@ update: download
 
 	git diff --staged --color \
 	  | perl -nle 'print if /\e\[3[12]m/' \
-	  | grep -vE 'DTSTAMP|CREATED|LAST-MODIFIED|UID|@@'
+	  | grep -vE 'DTSTAMP|CREATED|LAST-MODIFIED|UID|@@' \
+	  > /dev/null
 
 .PHONY: test
 test: ## Run tests
