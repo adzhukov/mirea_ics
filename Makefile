@@ -7,10 +7,10 @@ $(PROJECT):
 .PHONY: build ## Build project
 build: $(PROJECT)
 
-${GROUP}.ics: build
-	./$(PROJECT) -links ${GROUP} \
-	  | xargs -I % ./$(PROJECT) -file % ${GROUP}
-	./$(PROJECT) -merge $(GROUP)
+%.ics: build
+	./$(PROJECT) -links $(basename $@) \
+	  | xargs -I % ./$(PROJECT) -file % $(basename $@)
+	./$(PROJECT) -merge $(basename $@)
 
 .PHONY: update
 update: ${GROUP}.ics
