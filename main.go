@@ -13,6 +13,7 @@ var (
 	list  bool
 	links bool
 	merge bool
+	all   bool
 )
 
 func init() {
@@ -20,6 +21,7 @@ func init() {
 	flag.BoolVar(&list, "list", false, "print all groups in file")
 	flag.BoolVar(&links, "links", false, "print all file links")
 	flag.BoolVar(&merge, "merge", false, "merge calendars")
+	flag.BoolVar(&all, "all", false, "make calendars for all groups in file")
 }
 
 func main() {
@@ -56,6 +58,11 @@ func main() {
 		for _, link := range groups {
 			fmt.Println(link)
 		}
+	}
+
+	if all {
+		parser.ParseAllGroups(file)
+		return
 	}
 
 	for _, group := range args {

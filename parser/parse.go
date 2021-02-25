@@ -141,14 +141,18 @@ func Parse(uri string, g string) {
 		log.Fatalln(err)
 	}
 
+	parse(wb, g)
+}
+
+func parse(file *xlsx.File, g string) {
 	p := Parser{
 		Calendar: &calendar.Calendar{Group: normalizeGroup(g)},
-		Sheet:    wb.Sheets[0],
+		Sheet:    file.Sheets[0],
 	}
 
 	p.findGroup()
 	if p.Column == 0 {
-		log.Printf("Could not find group %s in file %s\n", g, uri)
+		log.Printf("Could not find group %s\n", g)
 		return
 	}
 
@@ -164,13 +168,28 @@ func Parse(uri string, g string) {
 	p.Calendar.File()
 }
 
+func ParseAllGroups(file string) {
+	wb, err := openFile(file)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, group := range groups(wb) {
+		parse(wb, group)
+	}
+}
+
 func Groups(file string) []string {
 	wb, err := openFile(file)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	row, err := wb.Sheets[0].Row(rowGroups)
+	return groups(wb)
+}
+
+func groups(file *xlsx.File) []string {
+	row, err := file.Sheets[0].Row(rowGroups)
 	if err != nil {
 		log.Fatalln(err)
 	}
