@@ -24,7 +24,7 @@ func Groups(file string) []string {
 	return groups(wb)
 }
 
-func ParseAllGroups(file string) {
+func ParseAllGroups(file string, mergeFlag bool) {
 	wb, err := openFile(file)
 	if err != nil {
 		log.Fatalln(err)
@@ -32,6 +32,9 @@ func ParseAllGroups(file string) {
 
 	for _, group := range groups(wb) {
 		parse(wb, group)
+		if mergeFlag {
+			merge(group)
+		}
 	}
 }
 

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 
 	"github.com/adzhukov/mirea_ics/parser"
 )
@@ -41,18 +40,6 @@ func main() {
 		return
 	}
 
-	if merge {
-		for _, group := range args {
-			parser.Merge(group)
-		}
-
-		return
-	}
-
-	if file == "" {
-		log.Fatalln("file flag should be set")
-	}
-
 	if list {
 		groups := parser.Groups(file)
 		for _, link := range groups {
@@ -61,7 +48,15 @@ func main() {
 	}
 
 	if all {
-		parser.ParseAllGroups(file)
+		parser.ParseAllGroups(file, merge)
+		return
+	}
+
+	if merge {
+		for _, group := range args {
+			parser.Merge(group)
+		}
+
 		return
 	}
 
