@@ -13,7 +13,7 @@ import (
 const calBegin = "END:VTIMEZONE"
 const calEnd = "END:VCALENDAR"
 
-func Merge(group string) {
+func merge(group string) {
 	group = normalizeGroup(group)
 
 	fileInfo, err := os.ReadDir("./")
