@@ -7,6 +7,11 @@ $(PROJECT):
 .PHONY: build ## Build project
 build: $(PROJECT)
 
+.PHONY: all.ics
+all.ics: build
+	./$(PROJECT) -links ${PATTERN} \
+	  | xargs -I % ./$(PROJECT) -file % -merge -all
+
 %.ics: build
 	./$(PROJECT) -links $(basename $@) \
 	  | xargs -I % ./$(PROJECT) -file % $(basename $@)
