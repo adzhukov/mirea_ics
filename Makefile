@@ -2,7 +2,7 @@
 PROJECT	= mirea_ics
 
 $(PROJECT):
-	go build
+	go build -ldflags="-s -w"
 
 .PHONY: build ## Build project
 build: $(PROJECT)
