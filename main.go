@@ -28,11 +28,7 @@ func main() {
 	args := flag.Args()
 
 	if links {
-		group := "nil"
-		if len(args) != 0 {
-			group = args[0]
-		}
-		links := parser.GetLinks(group)
+		links := parser.GetLinks(args)
 		for _, link := range links {
 			fmt.Println(link)
 		}

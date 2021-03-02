@@ -38,7 +38,11 @@ func ParseAllGroups(file string, mergeFlag bool) {
 	}
 }
 
-func GetLinks(group string) []string {
+func Merge(group string) {
+	merge(group)
+}
+
+func GetLinks(groups []string) []string {
 	resp, err := http.Get("https://mirea.ru/schedule")
 	if err != nil {
 		log.Fatalln(err)
@@ -51,9 +55,18 @@ func GetLinks(group string) []string {
 		log.Fatalln(err)
 	}
 
-	return filterGroups(body, normalizeGroup(group))
-}
+	m := make(map[string]struct{})
+	for _, group := range groups {
+		links := filterGroups(body, normalizeGroup(group))
+		for _, link := range links {
+			m[link] = struct{}{}
+		}
+	}
 
-func Merge(group string) {
-	merge(group)
+	links := make([]string, 0, len(m))
+	for link := range m {
+		links = append(links, link)
+	}
+
+	return links
 }
