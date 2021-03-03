@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 )
@@ -50,7 +50,7 @@ func GetLinks(groups []string) []string {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}
