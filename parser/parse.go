@@ -59,19 +59,6 @@ func (p *Parser) parseSemesterInfo() {
 
 	s := &p.Calendar.Semester
 
-	switch {
-	case strings.Contains(title, "осеннего"):
-		s.Type = calendar.Autumn
-	case strings.Contains(title, "зимней"):
-		s.Type = calendar.Winter
-	case strings.Contains(title, "весеннего"):
-		s.Type = calendar.Spring
-	case strings.Contains(title, "летней"):
-		s.Type = calendar.Summer
-	default:
-		log.Fatalln("Unable to parse semester type:", title)
-	}
-
 	s.Year = time.Now().Year()
 
 	splitted := strings.Split(title, "-")
@@ -83,10 +70,6 @@ func (p *Parser) parseSemesterInfo() {
 		s.Year = year
 	}
 
-	if s.Type == calendar.Autumn {
-		s.Year--
-	}
-
 	splitted = strings.Fields(title)
 	for i := range splitted {
 		if splitted[i] == "курса" {
@@ -95,11 +78,24 @@ func (p *Parser) parseSemesterInfo() {
 				log.Println(err)
 			}
 			s.Num = n * 2
-			if s.Type == calendar.Autumn || s.Type == calendar.Winter {
-				s.Num--
-			}
 			break
 		}
+	}
+
+	switch {
+	case strings.Contains(title, "осеннего"):
+		s.Type = calendar.Autumn
+		s.Year--
+		s.Num--
+	case strings.Contains(title, "зимней"):
+		s.Type = calendar.Winter
+		s.Num--
+	case strings.Contains(title, "весеннего"):
+		s.Type = calendar.Spring
+	case strings.Contains(title, "летней"):
+		s.Type = calendar.Summer
+	default:
+		log.Fatalln("Unable to parse semester type:", title)
 	}
 
 	length := 17
