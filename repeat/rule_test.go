@@ -171,8 +171,8 @@ func TestRangeWithEx(t *testing.T) {
 
 	expected := ParsedSubject{
 		Rule: Rule{
-			Mode:  Range,
-			Dates: []int{3, 17},
+			Mode:   Range,
+			Dates:  []int{3, 17},
 			Except: []int{11},
 		},
 		Subject:   `Иностранный язык`,

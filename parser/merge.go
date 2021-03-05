@@ -1,13 +1,14 @@
 package parser
 
 import (
-	"github.com/adzhukov/mirea_ics/calendar"
+	"bufio"
 	"bytes"
+	"io"
+	"log"
 	"os"
 	"strings"
-	"log"
-	"bufio"
-	"io"
+
+	"github.com/adzhukov/mirea_ics/calendar"
 )
 
 const calBegin = "END:VTIMEZONE"
@@ -22,11 +23,11 @@ func merge(group string) {
 	}
 
 	empty := calendar.Calendar{Group: group}.String()
-	empty = empty[:len(empty) - len(calEnd) - 2]
+	empty = empty[:len(empty)-len(calEnd)-2]
 	buf := bytes.NewBufferString(empty)
-	
+
 	for _, file := range fileInfo {
-		if name := file.Name(); strings.HasPrefix(name, group + " ") {
+		if name := file.Name(); strings.HasPrefix(name, group+" ") {
 			writeEvents(buf, name)
 		}
 	}
@@ -46,7 +47,7 @@ func writeEvents(w io.Writer, filename string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	
+
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
