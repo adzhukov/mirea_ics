@@ -78,7 +78,7 @@ func (result *ParsedSubject) parseAsSingle(dates string) {
 		weekString := strings.TrimPrefix(trimmed, "с")
 		week, err := strconv.Atoi(strings.TrimSpace(weekString))
 		if err != nil {
-			log.Panic(err)
+			log.Fatalln(err, dates)
 		}
 		result.Rule.Mode = Any
 		result.StartWeek = week
@@ -89,7 +89,7 @@ func (result *ParsedSubject) parseAsSingle(dates string) {
 		weekString := strings.TrimLeft(trimmed, "кр. ")
 		week, err := strconv.Atoi(strings.TrimSpace(weekString))
 		if err != nil {
-			log.Panic(err)
+			log.Fatalln(err, dates)
 		}
 		result.Rule.Mode = Any
 		result.Rule.Except = []int{week}
@@ -98,7 +98,7 @@ func (result *ParsedSubject) parseAsSingle(dates string) {
 
 	week, err := strconv.Atoi(trimmed)
 	if err != nil {
-		log.Panic(err)
+		log.Fatalln(err, dates)
 	}
 	result.Rule.Mode = Once
 	result.Rule.Dates = []int{week}
@@ -109,12 +109,12 @@ func (result *ParsedSubject) parseAsRange(dates string) {
 	d := strings.Split(dates, "-")
 	start, err := strconv.Atoi(strings.TrimSpace(d[0]))
 	if err != nil {
-		log.Panic(err)
+		log.Fatalln(err, dates)
 	}
 
 	end, err := strconv.Atoi(strings.TrimSpace(d[1]))
 	if err != nil {
-		log.Panic(err)
+		log.Fatalln(err, dates)
 	}
 
 	result.Rule.Mode = Range
@@ -131,7 +131,7 @@ func (result *ParsedSubject) parseAsEnum(dates string) {
 		for _, week := range weeks {
 			w, err := strconv.Atoi(strings.TrimSpace(week))
 			if err != nil {
-				log.Panic(err)
+				log.Fatalln(err, dates)
 			}
 			result.Rule.Except = append(result.Rule.Except, w)
 		}
@@ -143,7 +143,7 @@ func (result *ParsedSubject) parseAsEnum(dates string) {
 		week = strings.TrimSpace(week)
 		num, err := strconv.Atoi(week)
 		if err != nil {
-			log.Panic(err)
+			log.Fatalln(err, dates)
 		}
 		result.Rule.Dates = append(result.Rule.Dates, num)
 	}
