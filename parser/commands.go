@@ -55,6 +55,10 @@ func GetLinks(groups []string) []string {
 		log.Fatalln(err)
 	}
 
+	if len(groups) == 0 {
+		return filterGroups(body, "nil")
+	}
+
 	m := make(map[string]struct{})
 	for _, group := range groups {
 		links := filterGroups(body, normalizeGroup(group))
