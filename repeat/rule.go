@@ -163,11 +163,28 @@ func checkForExDate(result *ParsedSubject) {
 		return
 	}
 
-	week, err := strconv.Atoi(strings.Trim(trimmed, "кр. "))
-	if err != nil {
-		return
+	trimmed = strings.Trim(trimmed, "кр. ")
+	numbers := []int{}
+
+	if strings.ContainsRune(trimmed, ',') {
+		enum := strings.Split(trimmed, ",")
+		for _, num := range enum {
+			week, err := strconv.Atoi(num)
+			if err != nil {
+				return
+			}
+
+			numbers = append(numbers, week)
+		}
+	} else {
+		week, err := strconv.Atoi(trimmed)
+		if err != nil {
+			return
+		}
+
+		numbers = append(numbers, week)
 	}
 
-	result.Rule.Except = append(result.Rule.Except, week)
+	result.Rule.Except = append(result.Rule.Except, numbers...)
 	result.Subject = strings.TrimLeft(splitted[1], " ).")
 }
